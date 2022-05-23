@@ -1,0 +1,1111 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+/************************* ESB *************************************
+*********************************************************************/
+
+DECLARE ESB_SUCCESS_RESPONSE_CODE EXTERNAL CHARACTER '00000000';
+DECLARE ESB_RUNTIME_TECHNICAL_ERROR_CODE EXTERNAL CHARACTER '99999999';
+
+
+DECLARE ESB_MIDDLEWARE_DATABASE_ERROR_RESPONSE_CODE EXTERNAL CHARACTER 'E0199998';
+DECLARE ESB_MIDDLEWARE_RUNTIME_ERROR_RESPONSE_CODE EXTERNAL CHARACTER '99999999';
+-- Channel Authorization
+DECLARE ESB_MIDDLEWARE_IN_ACTIVE_CHANNEL_RESPONSE_CODE EXTERNAL CHARACTER 'E9009999';
+
+DECLARE ESB_EMPTY_HEADER_RESPONSE_CODE EXTERNAL CHARACTER 'E5500003';
+
+--Oday 09-10-2019 Service_Out check in MQ_Output_Node
+DECLARE ESB_WS_ADAPTER_GATEWAY_RS_FLOW_QUEUE EXTERNAL CHARACTER 'ESB.WS.OUT';
+
+DECLARE ESB_MIDDLEWARE_UN_AUTHORIZED_OPERATION_RESPONSE_CODE EXTERNAL CHARACTER '44444444';
+
+DECLARE ESB_MIDDLEWARE_NOT_EXIST_CHANNEL_RESPONSE_CODE EXTERNAL CHARACTER '55555555';
+
+DECLARE CR EXTERNAL CHARACTER CAST(CAST('X''0A''' AS BLOB) AS CHAR CCSID 1208);
+/************************* Billing SYSTEM **************************
+********************************************************************/
+DECLARE Billing_TIMEOUT EXTERNAL CHARACTER '1000'; -- in Milliseconds
+DECLARE Billing_NOREPLYCODE EXTERNAL CHARACTER 'NOREPLY';
+
+
+DECLARE DATABASE_SCHEMA_NAME EXTERNAL CHARACTER 'dbo'; --'MCR dbo master';
+DECLARE MCR_DSN EXTERNAL CHARACTER 'MWMCR_DS';
+
+
+DECLARE AUDIT_SCHEMA_NAME EXTERNAL CHARACTER 'MCR_AUDIT';
+/********************************** MCRDB ***********************************/
+DECLARE MCRDBTIMEOUTORDEADLOCKERROR CHAR 'E0500000'; --SHERIF 5 MARCH
+DECLARE MCRDBGENERALERROR CHAR 'E0599999';
+/***************************************************************************/
+/**********************************************************************************************************************************/
+/* Channel Gateway and TaskServiceCaller common functions */
+/**********************************************************************************************************************************/
+DECLARE CacheQueueTable SHARED ROW;
+
+CREATE FUNCTION SetQueues(IN rEsbXMLHeader REFERENCE, INOUT rOutLocalEnv REFERENCE, INOUT rOutRoot REFERENCE) RETURNS CHAR
+BEGIN
+	--CALL CopyMessageHeaders();
+	--CALL CopyEntireMessage();
+	--DECLARE InBodyRef REFERENCE TO InputRoot.XMLNSC;
+	DECLARE intf NAMESPACE 'http://qiwa.com/ESB/ExternalInterfaces/v1.0';
+	-- get function id and channel id from message request to determine whice request & response queue names
+	-- samples: '24010000', '11500000', '15500100'...
+
+	DECLARE ServiceCode CHAR CAST (FIELDVALUE(rEsbXMLHeader.ServiceCode) AS CHARACTER);
+	DECLARE ChannelID INTEGER getEsbChannelId(FIELDVALUE(rEsbXMLHeader.ChannelId));
+	DECLARE DestinationQueues Row;
+
+	IF ChannelID IS NULL THEN
+		RETURN ESB_MIDDLEWARE_NOT_EXIST_CHANNEL_RESPONSE_CODE;
+	END IF;
+
+	ROUTING : BEGIN ATOMIC
+		IF CacheQueueTable.valid IS NULL THEN
+			DECLARE SQLStatement CHARACTER;
+			SET SQLStatement = 'SELECT ESBFUNCID, CHANNID, REQUEST_QUEUE_NAME, RESPONSE_QUEUE_NAME FROM '
+			|| DATABASE_SCHEMA_NAME || '.MCR_CHANNAUTHQUEUES_VIEW';
+
+			SET CacheQueueTable.DestinationData[] = PASSTHRU(SQLStatement TO Database.{MCR_DSN});
+			SET CacheQueueTable.valid = true;
+		END IF;
+	END ROUTING;
+
+	SET DestinationQueues.list[] =
+	(
+	SELECT Q.REQUEST_QUEUE_NAME as RequestQueueName, Q.RESPONSE_QUEUE_NAME as ResponseQueueName
+	FROM CacheQueueTable.DestinationData[] as Q
+	WHERE Q.ESBFUNCID = ServiceCode
+	AND Q.CHANNID = ChannelID
+	);
+	/*Updated by Oday to make the target queue dynamic depends on the requested channel
+	02/08/2016*/
+	/*IF DestinationQueues.list.RequestQueueName IS NULL OR DestinationQueues.list.ResponseQueueName IS NULL THEN
+	SET rOutLocalEnv.Destination.MQ.DestinationData[1].queueName = 'ESBOUT';
+	SET rOutRoot.MQMD.ReplyToQ ='ESBOUT';
+	RETURN ESB_MIDDLEWARE_UN_AUTHORIZED_OPERATION_RESPONSE_CODE;
+	END IF;*/
+
+	IF DestinationQueues.list.RequestQueueName IS NULL OR DestinationQueues.list.ResponseQueueName IS NULL THEN
+		DECLARE channName CHARACTER FIELDVALUE(rEsbXMLHeader.ChannelId);
+		SET rOutLocalEnv.Destination.MQ.DestinationData[1].queueName = getChannelOutQueue(channName);
+		SET rOutRoot.MQMD.ReplyToQ =getChannelOutQueue(channName);
+		RETURN ESB_MIDDLEWARE_UN_AUTHORIZED_OPERATION_RESPONSE_CODE;
+	END IF;
+	/*End of Oday update
+	02/08/2016*/
+	-- set the destination queue for the atomic service
+	SET rOutLocalEnv.Destination.MQ.DestinationData[1].queueName = TRIM(DestinationQueues.list.RequestQueueName);
+	-- keep reply to which queue >> BE adpater reply to Atomic service
+	SET rOutRoot.MQMD.ReplyToQ = TRIM(DestinationQueues.list.ResponseQueueName);
+	-- added by taha
+	SET rOutLocalEnv.MQ.GET.QueueName = TRIM(DestinationQueues.list.ResponseQueueName);
+
+	RETURN '';
+END;
+--CREATE PROCEDURE GETIVRNAMEBYCUSTID ( IN CUSTID INTEGER, OUT USRNAME CHAR) LANGUAGE DATABASE DYNAMIC RESULT SETS 0 EXTERNAL NAME "MCRSCHEMA.GETIVRNAMEBYCUSTID";
+/********************************************************************************************************************
+* Function: getChannelCorrelationID
+* Description: -Generates a unique correlation ID to avoid any message mis-receiving or mismatch of message
+* request with the response.
+* -The generated ID consists of 3 parts: The 1st part (5 characters) represnt the channel ID
+* (e.g.: IVR, Portal, or the internal ID 'MW' that is used by the InternalServiceCaller component).
+* The 2nd part represents the input message UID (32:35 length).
+* The 3rd part is exist only in case of the InternalServiceCaller component which would call more than
+* one service in the same session (same input TransactionId), so has to change the corrID by adding
+* different offset value at the most right of 3 char length.
+*
+* The resulted corr ID entire length is 48 hexadecimal digit.
+*
+* ChannelId: The channel ID in char format. It will be padded with zeros to form 5 -char length, then converted
+* to a blob of 10 chars length.
+* TransactionId: The message unique ID as it comes from the channel in a general hexadecimal format.
+* offset: Different 3 chars length in case of the function caller is the InternalServiceCaller component.
+* Otherwise (the web service adapter call), the length of the offset is zero, and the message UID
+* will be in this case extend to occupy this 3 chars of the offset.
+*
+************************************************************************************************************************/
+
+CREATE FUNCTION getChannelCorrelationID(IN ChannelId CHAR, IN TransactionId CHAR, IN offset CHAR) RETURNS BLOB
+BEGIN
+	DECLARE chanBlob BLOB;
+	DECLARE chanString CHAR;
+	DECLARE addition CHAR;
+	DECLARE TransactionId_Padd CHAR;
+
+	SET addition = COALESCE(offset, '');
+	IF NOT LENGTH(addition)=0 THEN
+		SET addition=padding(offset, 3);
+		SET TransactionId_Padd = padding(TransactionId,35);
+	ELSE
+		SET TransactionId_Padd = padding(TransactionId,38);
+	END IF;
+
+	SET chanBlob = CAST(padding(ChannelId,5)AS BLOB CCSID 1208);
+	DECLARE chanBlobChar CHAR CAST(chanBlob AS CHAR);
+	SET chanString = SUBSTRING(chanBlobChar FROM 1 FOR 12) || TransactionId_Padd || addition || '''';
+	SET chanBlob = CAST(chanString AS BLOB);
+
+	RETURN chanBlob;
+
+END;
+/**********************************************************************************************************************************/
+-- Gateway & InternalServiceCaller funtions' end
+/**********************************************************************************************************************************/
+/********************************************************************************************************************
+* Function: MCRDB_Selection()
+* Description: -Passthru a selection statement and handles any DB exceptions
+* sqlString: The string containing the sql selection statement.
+* retRow: The returning selected rows.
+* ReturnString: The returning sttring that contains either success or error code.
+*
+************************************************************************************************************************/
+DECLARE SQLErrorDesc SHARED CHAR '';
+
+CREATE FUNCTION MCRDB_Selection (IN sqlString CHAR, INOUT retRow REFERENCE) RETURNS CHAR
+BEGIN
+	--DECLARE SQLState1 CHARACTER;
+	--DECLARE SQLErrorText1 CHARACTER;
+	DECLARE SQLCode1 INTEGER;
+	--DECLARE SQLNativeError1 INTEGER;
+
+
+	SET retRow = PASSTHRU (sqlString TO Database.{MCR_DSN});
+	--Retrieve the database return codes --
+	--SET SQLState1 = SQLSTATE;
+	SET SQLCode1 = SQLCODE;
+	SET SQLErrorDesc = SQLERRORTEXT;
+	--SET SQLNativeError1 = SQLNATIVEERROR;
+
+	IF SQLCode1 <> 0 THEN
+		IF SQLCode1 = -913 OR SQLCode1 = -911 THEN
+			RETURN MCRDBTIMEOUTORDEADLOCKERROR;
+		ELSE
+			RETURN MCRDBGENERALERROR;
+		END IF;
+	ELSE
+		RETURN GetESBSuccessCode();
+	END IF;
+
+END;
+----------------------------------------------------------------------------------------------------------
+/********************************************************************************************************************
+* Function: MCRDB_Selection()
+* Description: -Passthru a selection statement and handles any DB exceptions
+* sqlString: The string containing the sql selection statement.
+* retRow: The returning selected rows.
+* ReturnString: The returning sttring that contains either success or error code.
+*
+************************************************************************************************************************/
+--DECLARE SQLErrorDesc SHARED CHAR '';-- SHERIF 5 MARCH
+
+CREATE FUNCTION MCRDB_Selection_Array (IN sqlString CHAR, INOUT retRow REFERENCE) RETURNS CHAR
+BEGIN
+	DECLARE SQLCode1 INTEGER;
+
+	SET retRow.val[] = PASSTHRU (sqlString TO Database.{MCR_DSN});
+	--Retrieve the database return codes --
+	SET SQLCode1 = SQLCODE;
+	SET SQLErrorDesc = SQLERRORTEXT;
+
+	IF SQLCode1 <> 0 THEN
+		IF SQLCode1 = -913 OR SQLCode1 = -911 THEN
+			RETURN MCRDBTIMEOUTORDEADLOCKERROR;
+		ELSE
+			RETURN MCRDBGENERALERROR;
+		END IF;
+	ELSE
+		RETURN GetESBSuccessCode();
+	END IF;
+
+END;
+
+
+
+
+DECLARE CacheBackendMappedCodes SHARED ROW;
+DECLARE CacheBackendMappedCodesTime SHARED DATE;
+CREATE FUNCTION getBackendEsb_MapErrorCode(IN BackendName CHARACTER,IN BackendErrorCode CHARACTER ,IN ChannelId CHARACTER,OUT EnglishDescription CHAR, OUT ArabicDescription CHAR, OUT STATUS CHAR, OUT ESB_CODE CHAR)
+BEGIN
+
+	SET BackendErrorCode = TRIM(COALESCE(BackendErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE));
+	IF CacheBackendMappedCodesTime IS NULL OR CacheBackendMappedCodesTime <> CURRENT_DATE THEN
+		DECLARE SQLStatement CHARACTER;
+		SET SQLStatement = 'SELECT STATUS, CODE, CHANNID, AR_DESCRIPTION, EN_DESCRIPTION ,BE_NAME ,BE_CODE FROM '
+		|| DATABASE_SCHEMA_NAME || '.ESB_ERROR_CODES';
+		SET CacheBackendMappedCodes.ErrorData[] = PASSTHRU(SQLStatement TO Database.{MCR_DSN});
+		SET CacheBackendMappedCodesTime = CURRENT_DATE;
+	END IF;
+
+	DECLARE ErrorRecord ROW;
+	SET ErrorRecord.list[] =
+	(SELECT E.STATUS AS STATUS, E.CODE as Code, E.AR_DESCRIPTION as ArabicDescription, E.EN_DESCRIPTION as EnglishDescription
+	FROM CacheBackendMappedCodes.ErrorData[] as E
+	WHERE E.BE_CODE = BackendErrorCode AND E.CHANNID = ChannelId AND E.BE_NAME = BackendName);
+
+	DECLARE ErrorRecordAllChannel ROW;
+	SET ErrorRecordAllChannel.list[] =
+	(SELECT E.STATUS AS STATUS, E.CODE as Code, E.AR_DESCRIPTION as ArabicDescription, E.EN_DESCRIPTION as EnglishDescription
+	FROM CacheBackendMappedCodes.ErrorData[] as E
+	WHERE E.BE_CODE = BackendErrorCode AND E.BE_NAME = BackendName);
+	--SET esbCode = COALESCE(ErrorMapRecord.list[1].ESBCode,'EB999999');
+	SET EnglishDescription = COALESCE(ErrorRecord.list[1].EnglishDescription,ErrorRecordAllChannel.list[1].EnglishDescription);
+	SET ArabicDescription = COALESCE(ErrorRecord.list[1].ArabicDescription,ErrorRecordAllChannel.list[1].ArabicDescription);
+	SET STATUS = COALESCE(ErrorRecord.list[1].STATUS,ErrorRecordAllChannel.list[1].STATUS);
+	SET ESB_CODE=COALESCE(ErrorRecord.list[1].Code,ErrorRecordAllChannel.list[1].Code);
+
+END;
+--Sherif 22 June ESB Channels response out queues
+DECLARE CacheChannelOutQueues SHARED ROW;
+DECLARE CacheChannelOutQueuesTime SHARED DATE;
+CREATE FUNCTION getChannelOutQueue( IN ChannelId CHARACTER ) RETURNS CHARACTER
+BEGIN
+	-- MAKING DYNAMIC AND STORE THE RESULT FROM THE CHACHE
+
+	IF CacheChannelOutQueuesTime IS NULL OR CacheChannelOutQueuesTime <> CURRENT_DATE THEN
+		DECLARE SQLStatement CHARACTER;
+		SET SQLStatement = 'SELECT CHANNNAME , OUTQUEUE FROM '
+		|| DATABASE_SCHEMA_NAME || '.MCR_CHANN_TBL';
+		SET CacheChannelOutQueues.Queues[] = PASSTHRU(SQLStatement TO Database.{MCR_DSN});
+		SET CacheChannelOutQueuesTime = CURRENT_DATE;
+
+	END IF;
+
+	DECLARE Queues ROW;
+	SET Queues.list[] =
+	(
+	SELECT Q.CHANNNAME as ESBChannel, Q.OUTQUEUE as ESBOutQueue
+	FROM CacheChannelOutQueues.Queues[] as Q
+	WHERE Q.CHANNNAME = ChannelId
+	);
+
+	RETURN COALESCE(Queues.list[1].ESBOutQueue,'ESBOUT');
+
+
+END;
+/* New functions that modify the old getChannelID, to get explicitely the either the channel status or ID (added column in the table.*/
+CREATE FUNCTION getEsbChannelStatus(IN channelName CHARACTER ) RETURNS INTEGER
+BEGIN
+	DECLARE channelStatus INTEGER ;
+
+	DECLARE q CHAR '''';
+	DECLARE result ROW;
+	DECLARE sql CHARACTER;
+	--SET sql='SELECT ch.STATUS FROM '|| DATABASE_SCHEMA_NAME ||'.MCR_CHANN_TBL ch where ch.CHANNNAME='|| q||TRIM(channelName)||q;
+	SET sql='SELECT ch.STATUS FROM '|| DATABASE_SCHEMA_NAME ||'.MCR_CHANN_TBL ch where ch.CHANNNAME='|| q||TRIM(channelName)||q;
+
+
+	SET result=PASSTHRU(sql TO Database.{MCR_DSN});
+	SET channelStatus = result.STATUS;
+	RETURN channelStatus;
+
+END;
+
+CREATE FUNCTION getChannelIDByName(IN channelName CHARACTER ) RETURNS INTEGER
+BEGIN
+	DECLARE channelID INTEGER ;
+
+	DECLARE q CHAR '''';
+	DECLARE result ROW;
+	DECLARE sql CHARACTER;
+
+	SET sql='SELECT ch.CHANNID FROM '|| DATABASE_SCHEMA_NAME ||'.MCR_CHANN_TBL ch where ch.CHANNNAME='|| q||TRIM(channelName)||q;
+
+	SET result=PASSTHRU(sql TO Database.{MCR_DSN});
+	SET channelID = result.CHANNID;
+	RETURN channelID;
+
+END;
+
+DECLARE CacheChannelIds SHARED ROW;
+DECLARE CacheChannelIdsTime SHARED DATE;
+CREATE FUNCTION getEsbChannelId(IN channelName CHARACTER ) RETURNS INTEGER
+BEGIN
+	
+	IF CacheChannelIdsTime IS NULL OR CacheChannelIdsTime <> CURRENT_DATE THEN
+		DECLARE SQLStatement CHARACTER;
+		DECLARE q CHAR '''';
+		SET SQLStatement = 'SELECT ch.CHANNID , ch.CHANNNAME FROM '|| DATABASE_SCHEMA_NAME
+		||'.MCR_CHANN_TBL ch';
+		SET CacheChannelIds.Channels[] = PASSTHRU(SQLStatement TO Database.{MCR_DSN});
+		SET CacheChannelIdsTime = CURRENT_DATE;
+	END IF;
+
+	DECLARE channels ROW;
+	SET channels.list[] =
+	(
+	SELECT CH.CHANNID as channelID
+	FROM CacheChannelIds.Channels[] as CH
+	WHERE CH.CHANNNAME = channelName
+	);
+
+	DECLARE channelId INTEGER channels.list[1].channelID;
+	/*DECLARE result ROW;
+	DECLARE sql CHARACTER;
+	SET sql='SELECT ch.CHANNID FROM '|| DATABASE_SCHEMA_NAME ||'.MCR_CHANN_TBL ch where ch.CHANNNAME='|| q||TRIM(channelName)||q;
+	SET result=PASSTHRU(sql TO Database.{MCR_DSN});
+	SET channelId = result.CHANNID;*/
+
+	RETURN channelId;
+
+END;
+CREATE FUNCTION getEsbChannelIdWithError(IN channelName CHARACTER, INOUT errorcode CHARACTER ) RETURNS INTEGER
+BEGIN
+	DECLARE channelId INTEGER ;
+
+	DECLARE q CHAR '''';
+	DECLARE result ROW;
+	DECLARE rQResult REFERENCE TO result;
+	DECLARE sql CHARACTER;
+
+	SET sql='SELECT ch.CHANNID FROM '|| DATABASE_SCHEMA_NAME ||'.MCR_CHANN_TBL ch where ch.CHANNNAME='|| q||TRIM(channelName)||q;
+	SET errorcode = MCRDB_Selection(sql,rQResult);
+	IF errorcode <> GetESBSuccessCode() THEN
+		RETURN 0;
+	ELSE
+		--SET result=PASSTHRU(sql);
+		SET channelId = rQResult.CHANNID;
+		RETURN channelId;
+	END IF;
+END;
+
+
+Create PROCEDURE Create_esbXML_Response_Header (IN esbResponseCode CHARACTER, IN RequestHeader REFERENCE, IN ResponseHeader REFERENCE ) BEGIN
+
+	SET ResponseHeader.TransactionId = RequestHeader.TransactionId;
+	SET ResponseHeader.ChannelId = RequestHeader.ChannelId;
+
+	SET ResponseHeader.SessionId = RequestHeader.SessionId;
+	SET ResponseHeader.RequestTime = RequestHeader.RequestTime;
+
+	IF EXISTS(RequestHeader.MWRequestTime[]) THEN
+		SET ResponseHeader.MWRequestTime = RequestHeader.MWRequestTime;
+	END IF;
+
+	SET ResponseHeader.MWResponseTime =CAST(CURRENT_TIMESTAMP AS CHAR FORMAT GetTimestampFormat());
+
+	SET ResponseHeader.ServiceCode = RequestHeader.ServiceCode;
+
+	IF EXISTS(RequestHeader.DebugFlag[]) THEN
+		SET ResponseHeader.DebugFlag = RequestHeader.DebugFlag;
+	END IF;
+
+	IF EXISTS(RequestHeader.ChannelUserInfo.UserName[]) THEN
+		SET ResponseHeader.ChannelUserInfo.UserName = RequestHeader.ChannelUserInfo.UserName;
+	END IF;
+
+	IF EXISTS(RequestHeader.UDF[]) THEN
+		SET ResponseHeader.UDF = RequestHeader.UDF;
+	END IF;
+
+
+	DECLARE ArabicMSG, EnglishMSG, Status CHAR '';
+
+
+	CALL getEsbChannlsErrorCodeDescriptionFrom(esbResponseCode,ResponseHeader.ChannelId,ResponseHeader.ServiceCode,EnglishMSG,ArabicMSG,Status);
+	If EnglishMSG is null And ArabicMSG is null then
+		CALL getEsbErrorCodeDescriptionFrom(esbResponseCode,EnglishMSG,ArabicMSG, Status);
+	END IF;
+	SET ResponseHeader.ResponseStatus.Status = Status;
+	SET ResponseHeader.ResponseStatus.Code = COALESCE(esbResponseCode,'');
+	SET ResponseHeader.ResponseStatus.ArabicMsg = ArabicMSG;
+	SET ResponseHeader.ResponseStatus.EnglishMsg = EnglishMSG;
+
+END;
+--OverLoad Create_esbXML_Response_Header
+Create PROCEDURE Create_esbXML_Response_Header_Using_Backend_Code (IN BackEndName CHARACTER,IN BackEndCode CHARACTER, IN RequestHeader REFERENCE, IN ResponseHeader REFERENCE ) BEGIN
+
+	SET ResponseHeader.TransactionId = RequestHeader.TransactionId;
+	SET ResponseHeader.ChannelId = RequestHeader.ChannelId;
+
+	SET ResponseHeader.SessionId = RequestHeader.SessionId;
+	SET ResponseHeader.RequestTime = RequestHeader.RequestTime;
+
+	IF EXISTS(RequestHeader.MWRequestTime[]) THEN
+		SET ResponseHeader.MWRequestTime = RequestHeader.MWRequestTime;
+	END IF;
+
+	SET ResponseHeader.MWResponseTime =CAST(CURRENT_TIMESTAMP AS CHAR FORMAT GetTimestampFormat());
+
+	SET ResponseHeader.ServiceCode = RequestHeader.ServiceCode;
+
+	IF EXISTS(RequestHeader.DebugFlag[]) THEN
+		SET ResponseHeader.DebugFlag = RequestHeader.DebugFlag;
+	END IF;
+
+	IF EXISTS(RequestHeader.ChannelUserInfo.UserName[]) THEN
+		SET ResponseHeader.ChannelUserInfo.UserName = RequestHeader.ChannelUserInfo.UserName;
+	END IF;
+
+	IF EXISTS(RequestHeader.UDF[]) THEN
+		SET ResponseHeader.UDF = RequestHeader.UDF;
+	END IF;
+
+
+	DECLARE ArabicMSG, EnglishMSG, Status, esbResponseCode CHAR '';
+
+	CALL getBackendEsb_MapErrorCode(BackEndName,BackEndCode,ResponseHeader.ChannelId,EnglishMSG,ArabicMSG,Status,esbResponseCode);
+	If EnglishMSG is null And ArabicMSG is null then
+		CALL getEsbChannlsErrorCodeDescriptionFrom(ESB_RUNTIME_TECHNICAL_ERROR_CODE,ResponseHeader.ChannelId,ResponseHeader.ServiceCode,EnglishMSG,ArabicMSG,Status);
+	ELSEIF EnglishMSG is null And ArabicMSG is null then
+		CALL getEsbErrorCodeDescriptionFrom(ESB_RUNTIME_TECHNICAL_ERROR_CODE,EnglishMSG,ArabicMSG, Status);
+	END IF;
+
+	SET ResponseHeader.ResponseStatus.Status = Status;
+	SET ResponseHeader.ResponseStatus.Code = COALESCE(esbResponseCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE);
+	SET ResponseHeader.ResponseStatus.ArabicMsg = ArabicMSG;
+	SET ResponseHeader.ResponseStatus.EnglishMsg = EnglishMSG;
+
+END;
+-- This PROCEDURE ..
+Create PROCEDURE CreateEsbXMLResponseHeaderFromRoot (IN esbResponseCode CHARACTER, IN inputRootRef REFERENCE, IN outputRootRef REFERENCE , IN serviceResponseName CHAR)
+BEGIN
+
+	--DECLARE ServiceNS NAMESPACE FIELDNAMESPACE(inputRootRef.XMLNSC.*:*[<]);
+	IF CARDINALITY(outputRootRef.XMLNSC[]) <= 0 THEN
+		--CREATE LASTCHILD OF outputRootRef.XMLNSC Type 'XMLNSC.Folder' Name 'esbXML';
+		CREATE LASTCHILD OF outputRootRef DOMAIN('XMLNSC');
+	END IF;
+
+	IF CARDINALITY(outputRootRef.XMLNSC.{serviceResponseName}[]) <= 0 THEN
+		--CREATE FIRSTCHILD OF outputRootRef.XMLNSC NAMESPACE ServiceNS Name serviceResponseName;
+		--CREATE FIRSTCHILD OF outputRootRef.XMLNSC Name serviceResponseName;
+		CREATE FIRSTCHILD OF outputRootRef.XMLNSC Name serviceResponseName;
+	END IF;
+
+	IF CARDINALITY(outputRootRef.XMLNSC.{serviceResponseName}.Header[]) <= 0 THEN
+		--CREATE FIRSTCHILD OF outputRootRef.XMLNSC.*:{serviceResponseName} TYPE Name NAME 'Header';
+		CREATE FIRSTCHILD OF outputRootRef.XMLNSC.{serviceResponseName} TYPE Name NAME 'Header';
+	END IF;
+
+	--DECLARE inRequRef REFERENCE TO inputRootRef.XMLNSC.*:*[<];
+	--DECLARE outReqRef REFERENCE TO outputRootRef.XMLNSC.*:*[<];
+	
+	DECLARE inRequRef REFERENCE TO inputRootRef.XMLNSC.*[<];
+	DECLARE outReqRef REFERENCE TO outputRootRef.XMLNSC.*[<];
+	--start needs update
+	SET outReqRef.Header.TransactionId = inRequRef.Header.TransactionId;
+	SET outReqRef.Header.ChannelId = inRequRef.Header.ChannelId;
+
+	SET outReqRef.Header.SessionId = inRequRef.Header.SessionId;
+	SET outReqRef.Header.RequestTime = inRequRef.Header.RequestTime;
+
+	IF EXISTS(inRequRef.Header.MWRequestTime[]) THEN
+		SET outReqRef.Header.MWRequestTime = inRequRef.Header.MWRequestTime;
+	END IF;
+
+	SET outReqRef.Header.MWResponseTime =CAST(CURRENT_TIMESTAMP AS CHAR FORMAT GetTimestampFormat());
+
+	SET outReqRef.Header.ServiceCode = inRequRef.Header.ServiceCode;
+
+	IF EXISTS(inRequRef.Header.DebugFlag[]) THEN
+		SET outReqRef.Header.DebugFlag = inRequRef.Header.DebugFlag;
+	END IF;
+
+	IF EXISTS(inRequRef.Header.ChannelUserInfo.UserName[]) THEN
+		SET outReqRef.Header.ChannelUserInfo.UserName = inRequRef.Header.ChannelUserInfo.UserName;
+	END IF;
+
+	IF EXISTS(inRequRef.Header.UDF[]) THEN
+		SET outReqRef.Header.UDF = inRequRef.Header.UDF;
+	END IF;
+
+
+	DECLARE ArabicMSG, EnglishMSG, Status CHAR '';
+
+	CALL getEsbChannlsErrorCodeDescriptionFrom(esbResponseCode,inRequRef.Header.ChannelId,inRequRef.Header.ServiceCode,EnglishMSG,ArabicMSG,Status);
+	If EnglishMSG is null And ArabicMSG is null then
+		CALL getEsbErrorCodeDescriptionFrom(esbResponseCode,EnglishMSG,ArabicMSG,Status);
+	END IF;
+	SET outReqRef.Header.ResponseStatus.Status = Status;
+	SET outReqRef.Header.ResponseStatus.Code = COALESCE(esbResponseCode,'');
+	SET outReqRef.Header.ResponseStatus.ArabicMsg = ArabicMSG;
+	SET outReqRef.Header.ResponseStatus.EnglishMsg = EnglishMSG;
+	--SET outReqRef.Header.BackendError.errorCode VALUE = '';
+	--SET outReqRef.Header.BackendError.errorDescription VALUE = '';
+
+
+END;
+--CREATE RESPONSE HEADER FROM ROOT FOR BACKEND NAME AND BACKEND CODE
+Create PROCEDURE CreateEsbXMLResponseHeaderFromRootUsingBackendCode (IN BackEndName CHARACTER,IN BackEndCode CHARACTER, IN inputRootRef REFERENCE, IN outputRootRef REFERENCE , IN serviceResponseName CHAR)
+BEGIN
+
+	--DECLARE ServiceNS NAMESPACE FIELDNAMESPACE(inputRootRef.XMLNSC.*:*[<]);
+	IF CARDINALITY(outputRootRef.XMLNSC[]) <= 0 THEN
+		--CREATE LASTCHILD OF outputRootRef.XMLNSC Type 'XMLNSC.Folder' Name 'esbXML';
+		CREATE LASTCHILD OF outputRootRef DOMAIN('XMLNSC');
+	END IF;
+
+	IF CARDINALITY(outputRootRef.XMLNSC.{serviceResponseName}[]) <= 0 THEN
+		--CREATE FIRSTCHILD OF outputRootRef.XMLNSC NAMESPACE ServiceNS Name serviceResponseName;
+		CREATE FIRSTCHILD OF outputRootRef.XMLNSC Name serviceResponseName;
+	END IF;
+
+	IF CARDINALITY(outputRootRef.XMLNSC.{serviceResponseName}.Header[]) <= 0 THEN
+		--CREATE FIRSTCHILD OF outputRootRef.XMLNSC.*:{serviceResponseName} TYPE Name NAME 'Header';
+		CREATE FIRSTCHILD OF outputRootRef.XMLNSC.{serviceResponseName} TYPE Name NAME 'Header';
+	END IF;
+
+	--DECLARE inRequRef REFERENCE TO inputRootRef.XMLNSC.*:*[<];
+	--DECLARE outReqRef REFERENCE TO outputRootRef.XMLNSC.*:*[<];
+	
+	DECLARE inRequRef REFERENCE TO inputRootRef.XMLNSC.*[<];
+	DECLARE outReqRef REFERENCE TO outputRootRef.XMLNSC.*[<];
+	--start needs update
+	SET outReqRef.Header.TransactionId = inRequRef.Header.TransactionId;
+	SET outReqRef.Header.ChannelId = inRequRef.Header.ChannelId;
+
+	SET outReqRef.Header.SessionId = inRequRef.Header.SessionId;
+	SET outReqRef.Header.RequestTime = inRequRef.Header.RequestTime;
+
+	IF EXISTS(inRequRef.Header.MWRequestTime[]) THEN
+		SET outReqRef.Header.MWRequestTime = inRequRef.Header.MWRequestTime;
+	END IF;
+
+	SET outReqRef.Header.MWResponseTime =CAST(CURRENT_TIMESTAMP AS CHAR FORMAT GetTimestampFormat());
+
+	SET outReqRef.Header.ServiceCode = inRequRef.Header.ServiceCode;
+
+	IF EXISTS(inRequRef.Header.DebugFlag[]) THEN
+		SET outReqRef.Header.DebugFlag = inRequRef.Header.DebugFlag;
+	END IF;
+
+	IF EXISTS(inRequRef.Header.ChannelUserInfo.UserName[]) THEN
+		SET outReqRef.Header.ChannelUserInfo.UserName = inRequRef.Header.ChannelUserInfo.UserName;
+	END IF;
+
+	IF EXISTS(inRequRef.Header.UDF[]) THEN
+		SET outReqRef.Header.UDF = inRequRef.Header.UDF;
+	END IF;
+
+	DECLARE ArabicMSG, EnglishMSG, Status, esbResponseCode CHAR '';
+
+	CALL getBackendEsb_MapErrorCode(BackEndName,BackEndCode,inRequRef.Header.ChannelId,EnglishMSG,ArabicMSG,Status,esbResponseCode);
+	If EnglishMSG is null And ArabicMSG is null then
+		CALL getEsbChannlsErrorCodeDescriptionFrom(ESB_RUNTIME_TECHNICAL_ERROR_CODE,inRequRef.Header.ChannelId,inRequRef.Header.ServiceCode,EnglishMSG,ArabicMSG,Status);
+	ELSEIF EnglishMSG is null And ArabicMSG is null then
+		CALL getEsbErrorCodeDescriptionFrom(ESB_RUNTIME_TECHNICAL_ERROR_CODE,EnglishMSG,ArabicMSG, Status);
+	END IF;
+
+	SET outReqRef.Header.ResponseStatus.Status = Status;
+	SET outReqRef.Header.ResponseStatus.Code = COALESCE(esbResponseCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE);
+	SET outReqRef.Header.ResponseStatus.ArabicMsg = ArabicMSG;
+	SET outReqRef.Header.ResponseStatus.EnglishMsg = EnglishMSG;
+	--SET outReqRef.Header.BackendError.errorCode VALUE = '';
+	--SET outReqRef.Header.BackendError.errorDescription VALUE = '';
+
+
+END;
+
+DECLARE CacheESBCodesDescriptions SHARED ROW;
+DECLARE CachESBCodesDescriptionsTime SHARED DATE;
+-- Get ESB Error Code Description from DB table mapping and cache it in memory.
+CREATE FUNCTION getEsbErrorCodeDescriptionFrom( IN ErrorCode CHARACTER, OUT EnglishDescription CHAR, OUT ArabicDescription CHAR, OUT STATUS CHAR) --RETURNS CHARACTER
+BEGIN
+
+	SET ErrorCode = TRIM(COALESCE(ErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE));
+
+	IF CachESBCodesDescriptionsTime IS NULL OR CachESBCodesDescriptionsTime <> CURRENT_DATE THEN
+		DECLARE SQLStatement CHARACTER;
+		SET SQLStatement = 'SELECT STATUS,CODE, AR_DESCRIPTION, EN_DESCRIPTION FROM '
+		|| DATABASE_SCHEMA_NAME || '.ESB_ERROR_CODES';
+		SET CacheESBCodesDescriptions.ErrorData[] = PASSTHRU(SQLStatement TO Database.{MCR_DSN});
+		SET CachESBCodesDescriptionsTime = CURRENT_DATE;
+	END IF;
+
+	DECLARE ErrorRecord ROW;
+	SET ErrorRecord.list[] =
+	(
+	SELECT E.STATUS as STATUS, E.CODE as ErrorCode, E.AR_DESCRIPTION as ArabicDescription, E.EN_DESCRIPTION as EnglishDescription
+	FROM CacheESBCodesDescriptions.ErrorData[] as E
+	WHERE E.CODE = ErrorCode
+	);
+
+
+	SET EnglishDescription = ErrorRecord.list[1].EnglishDescription;
+	SET ArabicDescription = ErrorRecord.list[1].ArabicDescription;
+	SET STATUS = ErrorRecord.list[1].STATUS;
+	--RETURN ArabicDescription;
+END;
+
+DECLARE CacheESBChannelsCodesDescriptions SHARED ROW;
+DECLARE CacheESBChannelsCodesDescriptionsTime SHARED DATE;
+-- Get ESB Error Code Description Depand On Channel_ID, Function_ID And SourceOfSale from DB table mapping and cache it in memory.
+--CREATE FUNCTION getEsbChannlsErrorCodeDescriptionFrom( IN ErrorCode CHARACTER, IN ChannelID INTEGER, IN ServiceCode CHARACTER, IN SourceOfSale INTEGER, OUT EnglishDescription CHAR, OUT ArabicDescription CHAR) --RETURNS CHARACTER
+CREATE FUNCTION getEsbChannlsErrorCodeDescriptionFrom( IN ErrorCode CHARACTER, IN ChannelID CHAR, IN ServiceCode CHARACTER, OUT EnglishDescription CHAR, OUT ArabicDescription CHAR, OUT STATUS CHAR) --RETURNS CHARACTER
+BEGIN
+	SET ErrorCode = TRIM(COALESCE(ErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE));
+	
+	IF CacheESBChannelsCodesDescriptionsTime IS NULL OR CacheESBChannelsCodesDescriptionsTime <> CURRENT_DATE THEN
+		DECLARE SQLStatement CHARACTER;
+		SET SQLStatement = 'SELECT STATUS, CODE, CHANNID, AR_DESCRIPTION, EN_DESCRIPTION FROM '
+		|| DATABASE_SCHEMA_NAME || '.ESB_ERROR_CODES';
+		SET CacheESBChannelsCodesDescriptions.ErrorData[] = PASSTHRU(SQLStatement TO Database.{MCR_DSN});
+		SET CacheESBChannelsCodesDescriptionsTime = CURRENT_DATE;
+	END IF;
+	DECLARE ErrorRecord ROW;
+	SET ErrorRecord.list[] =
+	(SELECT E.STATUS AS STATUS, E.CODE as Code, E.AR_DESCRIPTION as ArabicDescription, E.EN_DESCRIPTION as EnglishDescription
+	FROM CacheESBChannelsCodesDescriptions.ErrorData[] as E
+	WHERE E.CODE = ErrorCode AND E.CHANNID = ChannelID);
+
+	SET EnglishDescription = ErrorRecord.list[1].EnglishDescription;
+	SET ArabicDescription = ErrorRecord.list[1].ArabicDescription;
+	SET STATUS = ErrorRecord.list[1].STATUS;
+
+END;
+/************************* format strings to decimal amount *******************
+********************************************************************/
+
+CREATE FUNCTION formatDecimal( IN amount CHARACTER,IN point CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE value CHARACTER '';
+	DECLARE newAmount CHARACTER COALESCE(amount,'0');
+	DECLARE intPoint INTEGER COALESCE(point,0) ;
+	DECLARE len INTEGER LENGTH(amount);
+	DECLARE pos INTEGER (len-intPoint)+1;
+	Set value= OVERLAY(newAmount placing '.' from pos for 0);
+	SET value= CAST(value as DECIMAL);
+	RETURN value;
+END;
+
+
+CREATE FUNCTION padding (IN id CHARACTER, IN len INTEGER) RETURNS CHARACTER
+BEGIN
+	DECLARE seq CHARACTER ;
+	DECLARE aLen INTEGER LENGTH(id);
+	SET seq=charseq('0',len-aLen);
+
+	RETURN seq||RIGHT(id,len);
+END;
+
+CREATE FUNCTION charseq (IN aChar Char, IN len INTEGER) RETURNS CHARACTER
+BEGIN
+	DECLARE I INTEGER 0;
+	DECLARE result CHARACTER '';
+	WHILE I <len DO
+		SET result=result||aChar;
+		SET I=I+1;
+	END WHILE;
+	RETURN result;
+END;
+--CREATE PROCEDURE GETuserName( IN USER_NAME CHAR,OUT USR_ID INTEGER) LANGUAGE DATABASE EXTERNAL NAME "MCRSCHEMA.GETUSRCHANNID";
+--=======================================================================
+CREATE FUNCTION GetESBSuccessCode () RETURNS CHAR
+BEGIN
+	RETURN ESB_SUCCESS_RESPONSE_CODE;
+END;
+
+--Oday to handle service_out on the MQ_Output_Node
+CREATE FUNCTION GetWSAdapterRsFlowQueue() RETURNS CHAR
+BEGIN
+	RETURN ESB_WS_ADAPTER_GATEWAY_RS_FLOW_QUEUE;
+END;
+/*CREATE FUNCTION GetESBPartiallySuccessCode () RETURNS CHAR
+BEGIN
+RETURN ESB_PARTIALLY_SUCCESS_RESPONSE_CODE;
+END;*/
+
+CREATE FUNCTION GetESBCR_NEW_LINE () RETURNS CHAR
+BEGIN
+	RETURN CR;
+END;
+
+CREATE FUNCTION getChannelIDFromChannelCode( IN channel CHARACTER ) RETURNS CHARACTER
+BEGIN
+	DECLARE q CHAR '''';
+	DECLARE result ROW;
+	DECLARE sql CHARACTER;
+
+	SET sql='SELECT a.channid  FROM '|| DATABASE_SCHEMA_NAME ||'.MCR_CHANN_TBL a where a.CHANNNAME='||q ||channel ||q;
+	-- SET sql='SELECT a.channid  FROM MCR.MCR_CHANN_TBL a where a.CHANNNAME='||q ||'OMNICHL' ||q;
+	-- get Currency by account id
+	SET result=PASSTHRU(sql TO Database.{MCR_DSN});
+
+	declare channelID CHARACTER ' ';
+
+	set channelID = CAST(result.CHANNID as CHARACTER );
+
+	RETURN channelID;
+END;
+--Sherif Get un authorized operation code ESB_MIDDLEWARE_UN_AUTHORIZED_OPERATION_RESPONSE_CODE
+CREATE FUNCTION GetESBUnAuthorizedOperationCode () RETURNS CHAR
+BEGIN
+	RETURN ESB_MIDDLEWARE_UN_AUTHORIZED_OPERATION_RESPONSE_CODE;
+END;
+--ESB_MIDDLEWARE_IN_ACTIVE_CHANNEL_RESPONSE_CODE
+CREATE FUNCTION GetESBInactiveChannelCode () RETURNS CHAR
+BEGIN
+	RETURN ESB_MIDDLEWARE_IN_ACTIVE_CHANNEL_RESPONSE_CODE;
+END;
+--Sherif 20 June
+--Oday 2 Aug 2016
+CREATE FUNCTION GetESBNotExistChannelCode () RETURNS CHAR
+BEGIN
+	RETURN ESB_MIDDLEWARE_NOT_EXIST_CHANNEL_RESPONSE_CODE;
+END;
+
+CREATE FUNCTION getFlowNameWithouSchema (IN EnvRef REFERENCE) RETURNS CHAR
+BEGIN
+	--CALL SPL
+	CALL Split(CAST(MessageFlowLabel AS CHAR),EnvRef,'.');
+	--RETURN SUBSTRING(SUBSTRING(MessageFlowLabel AFTER 'Qiwa.Framework.Lib.') AFTER '.');
+
+	RETURN CAST(FIELDVALUE(EnvRef.Split.*[<])AS CHAR);
+
+END;
+--Refresh Routing Cache
+
+CREATE FUNCTION refreshESBRoutingCache ()
+BEGIN
+	SET CacheQueueTable.valid 					VALUE 	= NULL;
+	SET CacheBackendMappedCodesTime 					= NULL;
+	SET	CacheChannelOutQueuesTime 						= NULL; 
+	SET CacheChannelIdsTime 							= NULL;
+	SET CachESBCodesDescriptionsTime					= NULL;
+	SET CacheESBChannelsCodesDescriptionsTime			= NULL;
+END;
+
+DECLARE DefaultCharacterSet SHARED INTEGER 1208;
+CREATE FUNCTION GetDefaultCharacterSet() RETURNS INTEGER
+BEGIN
+	RETURN DefaultCharacterSet;
+END;
+DECLARE TIMESTAMP_FORMAT_OMNI SHARED CHAR 'yyyy-MM-dd' || ''' ''' || 'HH:mm:ss.SSSSS';
+DECLARE TIMESTAMP_FORMAT SHARED CHAR 'yyyy-MM-dd' || ''' ''' || 'HH:mm:ss.SSS';
+
+CREATE FUNCTION GetTimestampFormat() RETURNS CHAR
+BEGIN
+	RETURN TIMESTAMP_FORMAT;
+END;
+
+CREATE FUNCTION GetOMNITimestampFormat() RETURNS CHAR
+BEGIN
+	RETURN TIMESTAMP_FORMAT_OMNI;
+END;
+
+DECLARE PKGTIMESTAMP_FORMAT SHARED CHAR 'yyyyMMddHHmmss';
+CREATE FUNCTION GetPCKGTimestampFormat() RETURNS CHAR
+BEGIN
+	RETURN PKGTIMESTAMP_FORMAT;
+END;
+
+DECLARE DATE_FORMAT SHARED CHAR 'yyyy-MM-dd';
+CREATE FUNCTION GetDateFormat() RETURNS CHAR
+BEGIN
+	RETURN DATE_FORMAT;
+END;
+
+CREATE PROCEDURE GetLastException( INOUT CurrentError REFERENCE) BEGIN
+	-- parse the exception list tree to find the last exception type, in order to highlight the most relevant error information
+	WHILE FieldName(CurrentError) = 'RecoverableException' or
+		FieldName(CurrentError) = 'DatabaseException' or
+		FieldName(CurrentError) = 'ConversionException' or
+		FieldName(CurrentError) = 'ParserException' or
+		FieldName(CurrentError) = 'UserException' or
+		FieldName(CurrentError) = 'MessageException'
+		DO
+		MOVE CurrentError LASTCHILD;
+	END WHILE;
+	MOVE CurrentError PARENT;
+END ;
+
+CREATE FUNCTION IsNumber( IN AmtVal CHARACTER) RETURNS BOOLEAN
+BEGIN
+	DECLARE EXIT HANDLER FOR SQLSTATE LIKE '%' BEGIN
+	RETURN FALSE ;
+END ;
+
+DECLARE I INTEGER CAST ( AmtVal AS INTEGER ) ;
+RETURN TRUE ;
+END ;
+
+
+CREATE PROCEDURE PARSEExceptionList(IN ExceptionList Reference ,IN ErrorInfo Reference )
+BEGIN
+	-- Temp variables declarations
+	DECLARE PLACE INTEGER;
+	DECLARE LAST_PLACE INTEGER;
+	DECLARE LABEL CHARACTER;
+	DECLARE ERROR CHARACTER;
+	-- Variables declaration
+	DECLARE MSG_ID BLOB;
+	DECLARE FLOW_NAME CHARACTER;
+	DECLARE NODE_NAME CHARACTER;
+	DECLARE ERROR_TIME TIMESTAMP;
+	DECLARE ERROR_NUMBER INTEGER;
+	DECLARE ERROR_TYPE CHARACTER;
+	DECLARE ERROR_SEVERITY CHARACTER;
+	DECLARE ERROR_DETAILS CHARACTER;
+	DECLARE MSG_DATA BLOB;
+	DECLARE PRSENT_TIME CHAR 'ddMMyyyyhhmmssSSS';
+	SET PRSENT_TIME = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT PRSENT_TIME);
+	--Declaration of Variables
+	DECLARE I Integer;
+	DECLARE J Integer;
+	DECLARE cLastTracedText CHAR;
+	-- Copying headers the Message Tree
+	--Declaration of variables
+	DECLARE Location character;
+	DECLARE Diagnostics character;
+	DECLARE DiagnosticsInfo character;
+	DECLARE Width Integer;
+	-- Point to the First Child to the ExceptionList Root.
+	SET Width = 1;
+	DECLARE Path REFERENCE TO ExceptionList.*[Width];
+	-- Check whether the Width of the Exception Tree is more and Proceed.
+	While LastMove(Path) do
+		SET Diagnostics = '';
+		SET DiagnosticsInfo = '';
+		While FieldName(Path) = 'RecoverableException' or FieldName(Path) =
+			'DatabaseException' or FieldName(Path)='MessageException' or
+			FieldName(Path) = 'ConversionException' or FieldName(Path) =
+			'ParserException' or FieldName(Path) = 'UserException'
+			do
+			IF Length(Path.Label) > 0 THEN
+				SET Location = Path.Label;
+			End if;
+			IF Length(Path.*[<].Text) > 0 THEN
+				SET Diagnostics = Diagnostics || Path.Text || '. ';
+				SET cLastTracedText=Path.Text;
+			End if;
+			MOVE Path Lastchild;
+		End while;
+		-- Construct the Specific Diagnostic Message.
+		MOVE Path Parent;
+		-- Determine the source of message which caused the error.
+
+
+		DECLARE START REFERENCE TO ExceptionList.*[1];
+		SET LABEL = START.Label;
+		SET PLACE = POSITION('.' IN LABEL);
+		SET LAST_PLACE = PLACE;
+		-- The following will be stored in the error table
+		IF COALESCE(LABEL,'') <> '' THEN
+			SET FLOW_NAME = SUBSTRING(LABEL FROM 1 FOR (LAST_PLACE - 1));
+		END IF;
+		SET NODE_NAME = Location;
+		SET ERROR_DETAILS = '';
+		SET ERROR_TYPE = FieldName(Path);
+		SET ERROR_TIME = CURRENT_TIMESTAMP;
+		SET ERROR_SEVERITY = Path.Severity;
+		SET ERROR_NUMBER = Path.Number;
+		MOVE Path FirstChild;
+		-- while loop included to generalize coding to ensure future
+		-- compatiblity in case of change in tree structure and to move
+		-- the insert's Field.
+		While FieldName(Path) <> 'Insert' AND LastMove(Path) do
+			MOVE Path NextSibling;
+		End while;
+		-- If and while loop to traverse all the inserts and construct the
+		-- additional diagnostic message.
+		IF FieldName(Path) = 'Insert' then
+			While LastMove(Path) do
+				IF Length(Path.Text) > 0 THEN
+					SET DiagnosticsInfo = DiagnosticsInfo || Path.Text || '. ';
+				End if;
+				MOVE Path NextSibling;
+			End while;
+
+		ELSE
+			SET DiagnosticsInfo='';
+		END IF;
+		SET ERROR_DETAILS = Diagnostics||DiagnosticsInfo;
+		SET ERROR_DETAILS=REPLACE(ERROR_DETAILS,'<','{');
+		SET ERROR_DETAILS=REPLACE(ERROR_DETAILS,'>','}');
+
+
+		SET Width = Width +1;
+		MOVE Path TO ExceptionList.*[Width];
+	End while;
+
+	SET ErrorInfo.FLOW_NAME = FLOW_NAME;
+	SET ErrorInfo.NODE_NAME = NODE_NAME;
+	SET ErrorInfo.ERROR_TYPE = ERROR_TYPE;
+	SET ErrorInfo.ERROR_TIME = ERROR_TIME;
+	SET ErrorInfo.ERROR_SEVERITY = ERROR_SEVERITY;
+	SET ErrorInfo.MSG_ID = MSG_ID;
+	SET ErrorInfo.ERROR_DETAILS = ERROR_DETAILS;
+	SET ErrorInfo.MSG_DATA = MSG_DATA;
+	SET ErrorInfo.ERROR_NUMBER = ERROR_NUMBER;
+	IF (ERROR_DETAILS IS NULL OR ERROR_DETAILS='')THEN
+		SET ErrorInfo.CompleteErrorMsg='';
+	ELSE
+		SET ErrorInfo.CompleteErrorMsg = CAST(CURRENT_TIMESTAMP AS CHAR)||';  Node Name  :'||NODE_NAME||';  Errror Text  :'|| ERROR_DETAILS;
+	END IF;
+
+END;
+
+CREATE FUNCTION FormatDate(IN inputDate CHARACTER,IN inFormat CHARACTER, IN outFormat CHARACTER ) RETURNS CHARACTER
+BEGIN
+
+	IF NULLIF(TRIM(inputDate),'') is null Then
+		RETURN NULL;
+	END IF;
+
+	DECLARE TempInput CHARACTER inputDate;
+	IF LENGTH(TempInput) < Length(inFormat) THEN
+		SET TempInput = TempInput ||REPLICATE('0',Length(inFormat) - LENGTH(TempInput));
+	END IF;
+	RETURN CAST( CAST(TempInput AS TIMESTAMP FORMAT inFormat) as CHARACTER FORMAT outFormat);
+
+END;
+
+
+CREATE PROCEDURE Split (IN S CHARACTER, IN Env REFERENCE, IN Delim CHARACTER)
+BEGIN
+	DECLARE P INTEGER;
+	DECLARE Idx INTEGER 1;
+
+	SET Env.Split = NULL;
+
+	REPEAT
+		SET P = POSITION(Delim IN S);
+		IF P = 0 THEN
+			SET Env.Split.Array[Idx] = S;
+		ELSE
+			SET Env.Split.Array[Idx] = LEFT(S, P - 1);
+			SET S = SUBSTRING(S FROM P + LENGTH(Delim));
+			SET Idx = Idx + 1;
+		END IF;
+		UNTIL P = 0
+
+	END REPEAT;
+
+END;
+
+
+CREATE COMPUTE MODULE Generic_Prepare_Fault
+	DECLARE nsf NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/' ;
+	DECLARE xml NAMESPACE 'http://www.w3.org/XML/1998/namespace' ;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		DECLARE DefaultCCSID INT CAST(GetDefaultCharacterSet() as INT);
+		SET OutputRoot.SOAP.faultCode = 'E999999';
+
+		DECLARE ErrorInfo ROW;
+		CALL PARSEExceptionList(InputExceptionList,ErrorInfo);
+		DECLARE CompleteErrorMsg CHAR;
+		SET CompleteErrorMsg=CAST(CURRENT_TIMESTAMP AS CHAR)||';  Errror Text  :'|| ErrorInfo.CompleteErrorMsg;
+
+
+		SET OutputRoot.SOAP.Context.Namespace.(SOAP.NamespaceDecl)xmlns:soapenv = nsf;
+		SET OutputRoot.SOAP.Body.nsf:Fault.faultcode = 'E99999';
+		SET OutputRoot.SOAP.Body.nsf:Fault.faultstring = 'Error while parsing message';
+		SET OutputRoot.SOAP.Body.nsf:Fault.faultactor = InputRoot.HTTPInputHeader."X-Original-HTTP-Command";
+		SET OutputRoot.SOAP.Body.nsf:Fault.detail.ExceptionType = CompleteErrorMsg;
+		SET OutputRoot.SOAP.Body.nsf:Fault.detail.ExceptionNumber = 'E999999';
+		SET OutputRoot.SOAP.Body.nsf:Fault.detail.ExceptionList = InputExceptionList;
+
+
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE FUNCTION SelectSubField
+(SourceString CHAR, Delimiter CHAR, TargetStringPosition INT) RETURNS CHAR
+-- This function returns a substring at parameter position TargetStringPosition within the
+-- passed parameter SourceString. An example of use might be:
+-- SelectSubField(MySourceField,' ',2) which will select the second subfield from the
+-- field MySourceField delimited by a blank. If MySourceField has the value
+-- "First Second Third" the function will return the value "Second"
+BEGIN
+	DECLARE DelimiterPosition INT;
+	DECLARE CurrentFieldPosition INT 1;
+	DECLARE StartNewString INT 1;
+	DECLARE WorkingSource CHAR SourceString;
+	SET DelimiterPosition = POSITION(Delimiter IN SourceString);
+	WHILE CurrentFieldPosition < TargetStringPosition
+		DO
+		IF DelimiterPosition = 0 THEN
+			-- DelimiterPosition will be 0 if the delimiter is not found
+			-- exit the loop
+			SET CurrentFieldPosition = TargetStringPosition;
+			SET WorkingSource = '';
+		ELSE
+			SET StartNewString = DelimiterPosition + 1;
+			SET WorkingSource = SUBSTRING(WorkingSource FROM StartNewString);
+			SET DelimiterPosition = POSITION(Delimiter IN WorkingSource);
+			SET CurrentFieldPosition = CurrentFieldPosition + 1;
+		END IF;
+	END WHILE;
+	IF DelimiterPosition> 0 THEN
+		-- Remove anything following the delimiter from the string
+		SET WorkingSource = SUBSTRING(WorkingSource FROM 1 FOR DelimiterPosition);
+		SET WorkingSource = TRIM(TRAILING Delimiter FROM WorkingSource);
+	END IF;
+	RETURN WorkingSource;
+
+END;
+
+CREATE FUNCTION getServiceResponseName(IN requestName Char) RETURNS CHAR
+BEGIN
+	IF SUBSTRING(requestName FROM (LENGTH(requestName)-1) FOR 2) = 'Rs' OR SUBSTRING(requestName FROM (LENGTH(requestName)-1) FOR 2) = 'Rq' THEN
+		RETURN (SUBSTRING(requestName FROM 1 FOR (LENGTH(requestName)-2))||'Rs');
+	ELSE
+		RETURN (requestName ||'Response');
+	END IF;
+
+END;
+ 
+--CREATE PROCEDURE DecryptPassword(IN ENCRYPTEDPASSPATH CHAR, IN PRIVATEKEYPATH CHAR,IN PASSPHRASE CHAR)
+--RETURNS CHAR
+--LANGUAGE JAVA
+--EXTERNAL NAME "esb.cryptography.openpgp.BouncyCastlePGP.decryptFile";
+
+CREATE PROCEDURE MEPSGenerateMacIn( IN DATA CHAR,IN KEY CHAR)
+RETURNS CHAR
+LANGUAGE JAVA 
+EXTERNAL NAME "esb.cryptography.des.TrippleDES.generateMACIN";
+
+CREATE FUNCTION decryptMessage(IN DecryptKey CHARACTER, IN InitVect CHARACTER, IN Authentication CHARACTER, IN Payload CHARACTER )
+RETURNS CHARACTER
+LANGUAGE JAVA 
+EXTERNAL NAME "esb.cryptography.aes.Decryption.aesDecryption";
+/* CREATE PROCEDURE GetCurrentHajriYear()
+RETURNS INT
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.CommonUtil.getCurrentHajriYear";
+
+CREATE PROCEDURE ConvertGrogorianToHajriDate(IN grogorianDate CHAR)
+RETURNS CHAR
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.CommonUtil.convertGrogorianToHajriDate";
+
+CREATE PROCEDURE GetTodayHajriDate()
+RETURNS CHAR
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.CommonUtil.getTodayHajriDate";*/ 
+
+---------------
+----- New Functions  
+CREATE FUNCTION getTodayHajriDate()
+RETURNS CHARACTER
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.HajriDateUtils.getTodayHajriDate";
+
+
+CREATE FUNCTION isHajriDateExpired(IN hajriDate CHAR)
+RETURNS Boolean
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.HajriDateUtils.isExpired";
+
+
+
+CREATE FUNCTION isHajriDateExpiredWithPattren(IN hajriDate CHAR,IN DatePattern CHARACTER)
+RETURNS Boolean
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.HajriDateUtils.isExpired";
+
+
+
+CREATE FUNCTION Logger(IN printData CHAR)
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.CommonUtil.Logger";
+
+
+CREATE FUNCTION PatternValidator(IN regex CHAR,IN inputValue CHAR)
+RETURNS Boolean
+LANGUAGE JAVA 
+EXTERNAL NAME "com.esb.qiwa.utility.RegexPatternUtils.matches";

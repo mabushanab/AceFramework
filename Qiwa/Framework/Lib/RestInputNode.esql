@@ -1,0 +1,277 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+
+CREATE COMPUTE MODULE RestInputNode_AdaptRequest
+	
+	DECLARE ServiceCallCorrIDOffset EXTERNAL INTEGER 99;
+	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		--CALL CopyEntireMessage();
+		--Set OutputRoot.JSON.Data.Test = 'test';--InputRoot.JSON.TEST;
+		--Set OutputLocalEnvironment.Destination.HTTP.RequestIdentifier ='';
+		SET OutputRoot.MQMD = InputRoot.MQMD;		
+		SET OutputRoot.Properties.CodedCharSetId = GetDefaultCharacterSet();
+		SET OutputRoot.MQMD.CodedCharSetId = GetDefaultCharacterSet();		
+		SET OutputRoot.MQRFH2.usr.http.reply.replyId = CAST(InputLocalEnvironment.Destination.HTTP.RequestIdentifier AS BLOB);
+		
+		DECLARE InBodyRef REFERENCE TO InputRoot.JSON;
+		DECLARE data REFERENCE to InBodyRef.Data;
+        --DECLARE intf NAMESPACE 'http://zain.com/ESB/ExternalInterfaces/v1.0';
+
+        CREATE LASTCHILD OF OutputRoot DOMAIN('XMLNSC');
+        DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+		--change the SOAP to esbXML startucture
+		--DECLARE reqMessageName CHAR FIELDNAME(data.esbJSON.Body.*[<]);
+		DECLARE reqMessageName CHAR FIELDNAME(data.*[<]);
+		--SET OutBodyRef.{reqMessageName} = data.esbJSON.Body.*[<];--data.processESBXMLRequest.processESBXMLRequest;
+		SET OutBodyRef.{reqMessageName} = data.*[<];
+		--SET OutputRoot.Properties.CodedCharSetId = 1089; commented, Mohamed ALi
+		SET OutputRoot.MQMD.CodedCharSetId = GetDefaultCharacterSet(); 
+		
+		--SET Environment.Variable.Channel = data.esbJSON.Body.*[<].Header.ChannelId;
+		SET Environment.Variable.Channel = data.*[<].Header.ChannelId;
+		--SET OutBodyRef.esbXML.Header.xmlns = NULL;
+		--SET OutBodyRef.esbXML.Body.xmlns = NULL;
+		
+		
+		-- Set CorellationID as IVR Message ID
+		-- the correlation ID shouldn't exceed 24 char
+		--DECLARE corrID BLOB;
+		DECLARE corrID BLOB;
+		DECLARE fixCorrID char;
+		--SET fixCorrID = UUIDASCHAR;
+		set fixCorrID = replace(data.*[<].Header.TransactionId,'-','') ;
+		--set fixCorrID = replace(data.esbJSON.Header.MsgUId,'-','') ;
+		
+		
+		--SET corrID = getChannelCorrelationID(data.esbJSON.Body.*[<].Header.ChannelId, fixCorrID, '');
+		SET corrID = getChannelCorrelationID(data.*[<].Header.ChannelId, fixCorrID, '');
+					
+		SET OutputRoot.MQMD.MsgId = 	corrID;
+		SET OutputRoot.MQMD.CorrelId = 	corrID;
+		
+		DECLARE xmlObject REFERENCE TO OutBodyRef.*[<];
+		
+		CALL createXMLArrays(xmlObject);
+		SET OutputRoot.XMLNSC.*[<].Header.ChannelId VALUE = data.*[<].Header.ChannelId;--'ESB';--loadedPropertiesRef.Variables.ChannelId_InternalCaller ;--
+		
+		SET Environment.InternalServiceCaller.callCorrIDOffset = ServiceCallCorrIDOffset;--loadedPropertiesRef.Variables.GetCDMLookupT24_callCorrIDOffset; --'77';
+
+
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	
+	CREATE PROCEDURE createXMLArrays(IN root REFERENCE ) 
+    BEGIN
+        -- track the start and end of 'arrays' ( sequences of same-named siblings )
+        DECLARE firstArrayElementRef REFERENCE TO root;
+        DECLARE siblingRef REFERENCE TO root;
+        DECLARE arraySize INTEGER 0;
+
+        WHILE LASTMOVE(siblingRef) DO
+                
+            -- Process any child elements first 
+            DECLARE firstChildRef REFERENCE TO siblingRef;
+            MOVE firstChildRef FIRSTCHILD;
+            IF LASTMOVE(firstChildRef) THEN
+                    CALL createxmlArrays(firstChildRef);
+            END IF;
+
+            -- IF this sibling's name is different from the previous one.
+            IF FIELDNAME(siblingRef) = FIELDNAME(firstArrayElementRef) THEN
+                    SET arraySize = arraySize + 1;
+            ELSE
+                    -- IF there was a sequence of two or more siblings with the same name
+                    IF arraySize > 1 THEN
+                            CALL createXMLArray(firstArrayElementRef, arraySize);
+                    END IF;                         
+
+                    -- start scanning for a new array
+                    MOVE firstArrayElementRef TO siblingRef;
+                    SET arraySize = 1;
+            END IF;
+            
+            MOVE siblingRef NEXTSIBLING;
+        END WHILE;
+        
+        IF arraySize > 1 THEN
+                CALL createXMLArray(firstArrayElementRef, arraySize);
+        END IF;
+    END;
+
+    CREATE PROCEDURE createXMLArray(IN firstArrayElementRef REFERENCE, IN arraySize INTEGER) BEGIN
+        -- Create a parent element for the array
+        DECLARE arrayParentRef REFERENCE TO firstArrayElementRef;
+        DECLARE arrayParentExtraRef1 REFERENCE TO firstArrayElementRef;
+        MOVE arrayParentExtraRef1 PARENT;
+        DECLARE arrayParentExtraRefT REFERENCE TO arrayParentExtraRef1;
+         DECLARE arrayParentExtraRefTcON REFERENCE TO arrayParentExtraRef1;       
+        -- Make the array members children of the new parent element
+        DECLARE pos INTEGER 1;
+        WHILE pos < arraySize DO
+        	CREATE NEXTSIBLING OF arrayParentExtraRef1 
+                AS arrayParentExtraRefT 
+                NAME FIELDNAME(arrayParentExtraRef1);
+                
+                DECLARE tempRef REFERENCE TO firstArrayElementRef;
+                -- advance the reference. This should never fail because we have
+                -- already walked all of these siblings to discover the array.
+                MOVE firstArrayElementRef NEXTSIBLING;
+				MOVE arrayParentExtraRef1 NEXTSIBLING;
+				
+                DETACH tempRef;
+                --ATTACH tempRef.Item TO arrayParentExtraRefT AS LASTCHILD;
+                SET arrayParentExtraRefT = tempRef;
+                SET pos = pos + 1;
+        END WHILE;
+        SET arrayParentExtraRefTcON = firstArrayElementRef;
+        DETACH arrayParentExtraRefTcON;
+        ATTACH arrayParentExtraRefTcON TO arrayParentExtraRefT AS NEXTSIBLING;
+    END;
+ 
+END MODULE;
+
+
+
+CREATE COMPUTE MODULE RestInputNode_AdaptResponse
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		--CALL CopyEntireMessage();
+		SET OutputLocalEnvironment.Destination.HTTP.RequestIdentifier = CAST(InputRoot.MQRFH2.usr.http.reply.replyId AS BLOB);
+		--CREATE FIELD OutputRoot.JSON.Data IDENTITY(JSON.Array)Data;
+		--Set OutputRoot.JSON.Data.esbJSON = InputRoot.XMLNSC;
+		Set OutputRoot.JSON.Data = InputRoot.XMLNSC;
+		CALL createJSONArrays(OutputRoot.JSON.Data);
+			
+		--SET OutputRoot.JSON.Data.esbJSON.*[<].Header.ChannelId = Environment.Variable.Channel;
+		SET OutputRoot.JSON.Data.*[<].Header.ChannelId = Environment.Variable.Channel;
+		/*
+		IF NOT OutputRoot.JSON.Data.*[<].Header.ResponseStatus.Code = GetESBSuccessCode() THEN
+			SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 400;
+			SET OutputRoot.HTTPReplyHeader."X-Original-HTTP-Status-Code" = 400;
+			SET OutputRoot.HTTPResponseHeader."X-Original-HTTP-Status-Code" = 400;
+		END IF;
+		*/
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	
+	 CREATE PROCEDURE createJSONArrays(IN root REFERENCE ) 
+        BEGIN
+                -- track the start and end of 'arrays' ( sequences of same-named siblings )
+                DECLARE firstArrayElementRef REFERENCE TO root;
+                DECLARE siblingRef REFERENCE TO root;
+                DECLARE arraySize INTEGER 0;
+
+                WHILE LASTMOVE(siblingRef) DO
+                        
+                        -- Process any child elements first 
+                        DECLARE firstChildRef REFERENCE TO siblingRef;
+                        MOVE firstChildRef FIRSTCHILD;
+                        IF LASTMOVE(firstChildRef) THEN
+                                CALL createJSONArrays(firstChildRef);
+                        END IF;
+
+                        -- IF this sibling's name is different from the previous one.
+                        IF FIELDNAME(siblingRef) = FIELDNAME(firstArrayElementRef) THEN
+                                SET arraySize = arraySize + 1;
+                        ELSE
+                                -- IF there was a sequence of two or more siblings with the same name
+                                IF arraySize > 1 THEN
+                                        CALL createJSONArray(firstArrayElementRef, arraySize);
+                                END IF;                         
+
+                                -- start scanning for a new array
+                                MOVE firstArrayElementRef TO siblingRef;
+                                SET arraySize = 1;
+                        END IF;
+                        
+                        MOVE siblingRef NEXTSIBLING;
+                END WHILE;
+                
+                IF arraySize > 1 THEN
+                        CALL createJSONArray(firstArrayElementRef, arraySize);
+                END IF;
+        END;
+
+        CREATE PROCEDURE createJSONArray(IN firstArrayElementRef REFERENCE, IN arraySize INTEGER) BEGIN
+                -- Create a parent element for the array
+                DECLARE arrayParentRef REFERENCE TO firstArrayElementRef;
+                CREATE PREVIOUSSIBLING OF firstArrayElementRef 
+                        AS arrayParentRef 
+                        TYPE JSON.Array 
+                        NAMESPACE FIELDNAMESPACE(firstArrayElementRef) 
+                        NAME FIELDNAME(firstArrayElementRef);
+                        
+                -- Make the array members children of the new parent element
+                DECLARE pos INTEGER 1;
+                WHILE pos <= arraySize DO
+                        DECLARE tempRef REFERENCE TO firstArrayElementRef;
+                        -- advance the reference. This should never fail because we have
+                        -- already walked all of these siblings to discover the array.
+                        MOVE firstArrayElementRef NEXTSIBLING;
+
+                        DETACH tempRef;
+                        ATTACH tempRef TO arrayParentRef AS LASTCHILD;
+                        
+                        SET pos = pos + 1;
+                END WHILE;
+        END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE RestInputNode_Refresh_Memory_Cache
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		
+		--set CacheQueueTable.valid value = null;
+		CALL refreshESBRoutingCache();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

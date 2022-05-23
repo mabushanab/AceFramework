@@ -1,0 +1,28 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+
+
+CREATE FILTER MODULE File_Input_Node_IsAuditEnabled
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+		SET Environment.Variables.FlowName = flowName;
+		IF NOT EXISTS(Environment.Properties.{ApplicationLabel}.{flowName}[]) THEN
+		
+--			IF LOG_ENABLED THEN
+--				RETURN TRUE;
+--			ELSE
+				RETURN FALSE;
+--			END IF;
+			
+		ELSE
+			
+			IF /*CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.LogEnabled AS BOOLEAN) OR*/ CAST( Environment.Properties.{ApplicationLabel}.{flowName}.Logging.AuditEnabled AS BOOLEAN) THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+			
+		END IF;
+	END;
+
+END MODULE;

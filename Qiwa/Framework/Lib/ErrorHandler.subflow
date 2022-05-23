@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmFilter.msgnode="ComIbmFilter.msgnode" xmlns:ComIbmFlowOrder.msgnode="ComIbmFlowOrder.msgnode" xmlns:ComIbmThrow.msgnode="ComIbmThrow.msgnode" xmlns:Qiwa_Framework_Lib_LogError.subflow="Qiwa/Framework/Lib/LogError.subflow" xmlns:Qiwa_Framework_Lib_MQ_Dynamic_Output_Node.subflow="Qiwa/Framework/Lib/MQ_Dynamic_Output_Node.subflow" xmlns:Qiwa_Framework_Lib_MWBusinessErrorResponse.subflow="Qiwa/Framework/Lib/MWBusinessErrorResponse.subflow"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="Qiwa/Framework/Lib/ErrorHandler.subflow" nsPrefix="Qiwa_Framework_Lib_ErrorHandler.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsAtomic" name="IsAtomic" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsFrotEndAdapter" name="IsFrotEndAdapter" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ROLL_BACK_TRANSACTION" name="ROLL_BACK_TRANSACTION" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsFrontEndJSONAdapter" name="IsFrontEndJSONAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsT24Adapter" name="IsT24Adapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsNIWSAdapter" name="IsNIWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsT24OFENQAdapter" name="IsT24OFENQAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.dataSource" name="dataSource">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ATOMIC_RESPONSE_QUEUE" name="ATOMIC_RESPONSE_QUEUE" defaultValueLiteral="ESBOUT">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsMEPSWSAdapter" name="IsMEPSWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsICBSWSAdapter" name="IsICBSWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsA2AWSAdapter" name="IsA2AWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsACHWSAdapter" name="IsACHWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsODMWSAdapter" name="IsODMWSAdapter" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsUnifonicAdapter" name="IsUnifonicAdapter" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsNICAdapter" name="IsNICAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsMLSDWSAdapter" name="IsMLSDWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsCapptionsWSAdapter" name="IsCapptionsWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsHyperpayWSAdapter" name="IsHyperpayWSAdapter" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="ErrorHandler" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/ErrorHandler.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/ErrorHandler.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="Error Handler SubFlow"/>
+    <longDescription xmi:type="utility:ConstantString" string="The SubFlow do the following :&#xD;&#xA;Handling File failure.&#xD;&#xA;Handling System Down for backends.&#xD;&#xA;Handling Validation Failure.&#xD;&#xA;Handling WebService Timeout , Faults and Failure.&#xD;&#xA;Handling MQInput Exceptions and Failure.&#xD;&#xA;Special handling for atomic services.&#xD;&#xA;preparing response error regarding for each backend Type."/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="47,316">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Default Error Handler"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service Manually handling the Errors."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="322,421">
+        <translation xmi:type="utility:ConstantString" string="Flow Order"/>
+        <shortDescription xmi:type="utility:ConstantString" string="check Atomic Service Handling then logging error"/>
+        <longDescription xmi:type="utility:ConstantString" string="Go to Atomic Service Handling then go to logging error."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="539,421" filterExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_IsAtomicService.Main">
+        <translation xmi:type="utility:ConstantString" string="IsAtomicService"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check if Service is Atomic ?"/>
+        <longDescription xmi:type="utility:ConstantString" string="check Service Type is Atomic or not regarding to isAtomic property of the subflow&#xD;&#xA;if true then create generic response other wise render business error response."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_MWBusinessErrorResponse.subflow:FCMComposite_1" xmi:id="FCMComposite_1_9" location="732,534">
+        <translation xmi:type="utility:ConstantString" string="MWBusinessErrorResponse"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Middleware business Error Response"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service Preparing response regarding ESB Response Code and send it to reply queue"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_11" location="772,425" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_CreateGeniricRs.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="CreateGeniricRs"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Create Generic Response"/>
+        <longDescription xmi:type="utility:ConstantString" string="checks the error type and preparing the response regarding to it.&#xD;&#xA;checks the error type is refering to any of Backends then prepare the response with valid mapping with esb&#xD;&#xA;prepares the headers , properties and MQ Headers for sending the response to the channel."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="968,426">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Error Handler Output"/>
+        <longDescription xmi:type="utility:ConstantString" string="complete the service normally after catching the error successfully."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input1" location="47,420">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.WSFailure" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Web Service Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service Throws Failure in Web Service Invocation."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input2" location="50,520">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.WSFault" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Web Service Fault"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service Throws Erros for Web services with fault response."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="187,420" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_HandleFailure.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleFailure"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handle WS Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Passing through the message with defining the error type as &quot;Failure&quot;."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="194,520" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_HandleFault.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleFault"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handle WS Fault."/>
+        <longDescription xmi:type="utility:ConstantString" string="Passing through the message with defining the error type as &quot;Fault&quot;."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input3" location="25,635">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.MQInputFailure" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQ Input Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service Throws MQ Input Failure"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input4" location="23,789">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.MQInputCatch" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQ Input Catch"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service Throws Exception from MQ Input."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_14" location="521,644">
+        <translation xmi:type="utility:ConstantString" string="Flow Order1"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Checks if Exeption caught."/>
+        <longDescription xmi:type="utility:ConstantString" string="Checks if Exeption caught or not"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_15" location="363,636">
+        <translation xmi:type="utility:ConstantString" string="Flow Order2"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handle Atomic Check and Exeption Catch"/>
+        <longDescription xmi:type="utility:ConstantString" string="Handling Atomic Check , then handling if Exeption caught."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_17" location="423,791">
+        <translation xmi:type="utility:ConstantString" string="Flow Order4"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Log Error Then Check RollBack"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_18" location="606,799" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_IsRollBackEnabled.Main">
+        <translation xmi:type="utility:ConstantString" string="IsRollBackEnabled"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Is RollBack Enabled"/>
+        <longDescription xmi:type="utility:ConstantString" string="Check if RollBack is enabled."/>
+      </nodes>
+      <nodes xmi:type="ComIbmThrow.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_19" location="855,811">
+        <translation xmi:type="utility:ConstantString" string="Throw"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Throw Exception if rollback enabled"/>
+        <longDescription xmi:type="utility:ConstantString" string="Throw Exception for unkown exception if rollback enabled"/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_LogError.subflow:FCMComposite_1" xmi:id="FCMComposite_1_20" location="885,700">
+        <translation xmi:type="utility:ConstantString" string="LogError"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Log Error "/>
+        <longDescription xmi:type="utility:ConstantString" string="Prepare Error Message and call Log Error service to be logged"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_21" location="169,635" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_HandleMQInputFailure.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleMQInputFailure"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handling MQ Input Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Passing through the message with defining the error type as &quot;MQInputFailure&quot;."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_22" location="163,789" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_HandleMQInputCatch.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleMQInputCatch"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQ Input Catch"/>
+        <longDescription xmi:type="utility:ConstantString" string="Passing through the message with defining the error type as &quot;MQInputCatch&quot;."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_23" location="640,644" filterExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_IsExceptionCaught.Main">
+        <translation xmi:type="utility:ConstantString" string="IsExceptionCaught"/>
+        <shortDescription xmi:type="utility:ConstantString" string="checks if the exception is caught"/>
+        <longDescription xmi:type="utility:ConstantString" string="if caught then set EXCEPTION_CAUGHT = false&#xD;&#xA;otherwise log error."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="568,735">
+        <translation xmi:type="utility:ConstantString" string="Flow Order3"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="446,551" filterExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_IsExceptionCaught.Main">
+        <translation xmi:type="utility:ConstantString" string="IsExceptionCaught1"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Is Exception is caught for Atomic Check"/>
+        <longDescription xmi:type="utility:ConstantString" string="If Exception is caught do nothing, if not caught then&#xD;&#xA;check if service is atomic or not."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input5" location="26,247">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.ValidationFailure" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Validation Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service Throw Validation Failure while Schema Validtion was failed."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="342,248">
+        <translation xmi:type="utility:ConstantString" string="Flow Order5"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Create Generic Respones then send the reply"/>
+        <longDescription xmi:type="utility:ConstantString" string="Create the Generic Response then sending reply."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="163,247" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_HandleValidationFailure.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleValidationFailure"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handle validation Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Passing through the message with defining the error type as &quot;ValidationFailure&quot;."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input6" location="35,168">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.SystemDown" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="System Down Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="In Backend Adapters : &#xD;&#xA;Service throws System Down , when the adapter / Backend defined  System Down = True"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="715,684" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_SetExceptionCaught.Main">
+        <translation xmi:type="utility:ConstantString" string="SetExceptionCaught"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input7" location="44,94">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.FileFailure" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="File Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="service throws File Failure exception"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_12" location="177,94" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_HandleFileFailure.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleFileFailure"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handle File Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Passing through the message with defining the error type as &quot;FileFailure&quot;"/>
+      </nodes>
+      <nodes xmi:type="ComIbmThrow.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_27" location="558,103">
+        <translation xmi:type="utility:ConstantString" string="Throw1"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Throw file Exception"/>
+        <longDescription xmi:type="utility:ConstantString" string="Throw File Exception"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_32" location="383,95">
+        <translation xmi:type="utility:ConstantString" string="Flow Order10"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check Exception Catch then throw"/>
+        <longDescription xmi:type="utility:ConstantString" string="check if the exception caught then throw the exception."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input8" location="44,874">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.FileInputCatch" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_13" location="171,874" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_HandleFileInputCatch.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleFileInputCatch"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_16" location="425,874">
+        <translation xmi:type="utility:ConstantString" string="Flow Order6"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Log Error Then Check RollBack"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_24" location="574,875" filterExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_IsFileSchemaValidationOccured.Main">
+        <translation xmi:type="utility:ConstantString" string="IsFileSchemaValidationOccured"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_25" location="757,881">
+        <translation xmi:type="utility:ConstantString" string="Flow Order7"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Log Error Then Check RollBack"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_26" location="885,886" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_PrepareFileDataForAudit.Main">
+        <translation xmi:type="utility:ConstantString" string="PrepareFileDataForAudit"/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_MQ_Dynamic_Output_Node.subflow:FCMComposite_1" xmi:id="FCMComposite_1_28" location="1045,886" DEAD_FLOW="true">
+        <translation xmi:type="utility:ConstantString" string="MQ_Dynamic_Output_Node"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.FileFailure1" location="37,10">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.FileValidationFailure" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="File Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="service throws File Failure exception"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_29" location="179,11" computeExpression="esql://routine/Qiwa.Framework.Lib#ErrorHandler_PrepareFileDataForAudit.Main">
+        <translation xmi:type="utility:ConstantString" string="SchemaErrorAuditData"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handle File Failure"/>
+        <longDescription xmi:type="utility:ConstantString" string="Passing through the message with defining the error type as &quot;FileFailure&quot;"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_30" location="386,7">
+        <translation xmi:type="utility:ConstantString" string="Flow Order8"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check Exception Catch then throw"/>
+        <longDescription xmi:type="utility:ConstantString" string="check if the exception caught then throw the exception."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_31" location="539,15">
+        <translation xmi:type="utility:ConstantString" string="Flow Order9"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check Exception Catch then throw"/>
+        <longDescription xmi:type="utility:ConstantString" string="check if the exception caught then throw the exception."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_MQ_Dynamic_Output_Node.subflow:FCMComposite_1" xmi:id="FCMComposite_1_33" location="492,-74">
+        <translation xmi:type="utility:ConstantString" string="MQ_Dynamic_Output_Node1"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_7" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in">
+        <bendPoints>178,-9,-96,-116</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_11" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_11" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_2" sourceNode="InTerminal.Input1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="FCMComposite_1_3" sourceNode="InTerminal.Input2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_14" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_20" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_15" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_22" targetNode="FCMComposite_1_18" sourceNode="FCMComposite_1_17" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_23" targetNode="FCMComposite_1_19" sourceNode="FCMComposite_1_18" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_26" targetNode="FCMComposite_1_21" sourceNode="InTerminal.Input3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_27" targetNode="FCMComposite_1_15" sourceNode="FCMComposite_1_21" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_28" targetNode="FCMComposite_1_22" sourceNode="InTerminal.Input4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_33" targetNode="FCMComposite_1_23" sourceNode="FCMComposite_1_14" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_36" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_37" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_38" targetNode="FCMComposite_1_17" sourceNode="FCMComposite_1_22" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_39" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_17" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_15" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_15" targetNode="FCMComposite_1_11" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_16" targetNode="FCMComposite_1_6" sourceNode="InTerminal.Input5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_17" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_11" sourceNode="InTerminal.Input6" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in">
+        <bendPoints>398,-11,-343,-268</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_25" targetNode="FCMComposite_1_12" sourceNode="InTerminal.Input7" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_46" targetNode="FCMComposite_1_32" sourceNode="FCMComposite_1_12" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_47" targetNode="FCMComposite_1_23" sourceNode="FCMComposite_1_32" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_48" targetNode="FCMComposite_1_27" sourceNode="FCMComposite_1_32" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_19" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_23" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_49" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_23" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_18" targetNode="FCMComposite_1_13" sourceNode="InTerminal.Input8" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_21" targetNode="FCMComposite_1_16" sourceNode="FCMComposite_1_13" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_24" targetNode="FCMComposite_1_18" sourceNode="FCMComposite_1_16" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_29" targetNode="FCMComposite_1_24" sourceNode="FCMComposite_1_16" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_30" targetNode="FCMComposite_1_25" sourceNode="FCMComposite_1_24" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_31" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_25" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_32" targetNode="FCMComposite_1_26" sourceNode="FCMComposite_1_25" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_34" targetNode="FCMComposite_1_28" sourceNode="FCMComposite_1_26" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_35" targetNode="FCMComposite_1_29" sourceNode="InTerminal.FileFailure1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_40" targetNode="FCMComposite_1_30" sourceNode="FCMComposite_1_29" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_41" targetNode="FCMComposite_1_31" sourceNode="FCMComposite_1_30" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_42" targetNode="FCMComposite_1_33" sourceNode="FCMComposite_1_30" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_43" targetNode="FCMComposite_1_27" sourceNode="FCMComposite_1_31" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_44" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_31" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.IsAtomic">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.IsAtomic" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+        <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsFrotEndAdapter">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.IsFrotEndAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ROLL_BACK_TRANSACTION">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.ROLL_BACK_TRANSACTION" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+            <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsFrontEndJSONAdapter">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.IsFrontEndJSONAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+              <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsT24Adapter">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.IsT24Adapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsNIWSAdapter">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.IsNIWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                  <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsT24OFENQAdapter">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.IsT24OFENQAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" describedAttribute="Property.dataSource">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.dataSource" bundleName="ComIbmCompute" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                      <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.ATOMIC_RESPONSE_QUEUE">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.ATOMIC_RESPONSE_QUEUE" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                        <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsMEPSWSAdapter">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.IsMEPSWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                          <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsICBSWSAdapter">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.IsICBSWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                            <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsA2AWSAdapter">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.IsA2AWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                              <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsACHWSAdapter">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.IsACHWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsODMWSAdapter">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.IsODMWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                  <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsUnifonicAdapter">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.IsUnifonicAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                    <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsNICAdapter">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.IsNICAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                      <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsMLSDWSAdapter">
+                                        <propertyName xmi:type="utility:TranslatableString" key="Property.IsMLSDWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                        <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsCapptionsWSAdapter">
+                                          <propertyName xmi:type="utility:TranslatableString" key="Property.IsCapptionsWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                          <propertyDescriptor groupName="Group.AdapterType" configurable="true" userDefined="true" describedAttribute="Property.IsHyperpayWSAdapter">
+                                            <propertyName xmi:type="utility:TranslatableString" key="Property.IsHyperpayWSAdapter" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                          </propertyDescriptor>
+                                        </propertyDescriptor>
+                                      </propertyDescriptor>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.dataSource" overriddenNodes="FCMComposite_1_11">
+      <overriddenAttribute href="ComIbmCompute.msgnode#Property.dataSource"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ATOMIC_RESPONSE_QUEUE" overriddenNodes="FCMComposite_1_9">
+      <overriddenAttribute href="Qiwa/Framework/Lib/MWBusinessErrorResponse.subflow#Property.OUT_QUEUE"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

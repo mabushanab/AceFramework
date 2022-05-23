@@ -1,0 +1,19 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+
+
+
+DECLARE DEAD_FLOW EXTERNAL BOOLEAN FALSE;
+
+CREATE FILTER MODULE MQ_OutputNode_IsDeadFlow
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF DEAD_FLOW THEN
+			RETURN TRUE;
+		ELSE
+			DECLARE queueName CHAR Root.MQRFH2.usr.queue.distinationQueue;
+			SET LocalEnvironment.Destination.MQ.DestinationData[1].queueName =  queueName;
+			RETURN FALSE;
+		END IF;
+	END;
+
+END MODULE;

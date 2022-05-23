@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="Qiwa/Framework/Lib/RetryPoint.subflow" nsPrefix="Qiwa_Framework_Lib_RetryPoint.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MAX_RETRY_COUNT" name="MAX_RETRY_COUNT" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MIN_WAIT_TIME_SEC" name="MIN_WAIT_TIME_SEC" lowerBound="1" defaultValueLiteral="60">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="RetryPoint" bundleName="Qiwa/Framework/Lib/RetryPoint" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/RetryPoint.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/RetryPoint.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="Retry Point"/>
+    <longDescription xmi:type="utility:ConstantString" string="this flow doing the follwing :&#xD;&#xA;setting the retry count threshold times , and minimum wait time in seconds.&#xD;&#xA;setting the request message in the queue regarding to defined count"/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="34,30">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="Qiwa/Framework/Lib/RetryPoint" pluginId="Framework"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="367,31" queueName="ESB.RETRY" connection="CLIENT" transactionMode="no" validateMaster="none" policyUrl="{MQPolicyProject}:MQEndpointPolicy">
+        <translation xmi:type="utility:ConstantString" string="MQ Output"/>
+        <shortDescription xmi:type="utility:ConstantString" string="send to retry queue"/>
+        <longDescription xmi:type="utility:ConstantString" string="send to retry queue and esb will retry putting the request to request queue again."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="178,30" computeExpression="esql://routine/Qiwa.Framework.Lib#SetRetryProperties.Main">
+        <translation xmi:type="utility:ConstantString" string="SetRetryProperties"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Setting Retry Properties "/>
+        <longDescription xmi:type="utility:ConstantString" string="setting the number of counts for retrying , with minimum time for waiting and the response queue in the mqmd header"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.MAX_RETRY_COUNT">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.MAX_RETRY_COUNT" bundleName="Qiwa/Framework/Lib/RetryPoint" pluginId="Framework"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.MIN_WAIT_TIME_SEC">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.MIN_WAIT_TIME_SEC" bundleName="Qiwa/Framework/Lib/RetryPoint" pluginId="Framework"/>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

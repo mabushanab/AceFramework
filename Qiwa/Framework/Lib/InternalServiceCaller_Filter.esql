@@ -1,0 +1,18 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+
+
+
+
+CREATE FILTER MODULE InternalServiceCaller_Filter
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Root.XMLNSC.*:*[<].Header.RqData.ChanId IS NOT NULL THEN
+			IF Root.XMLNSC.*:*[<].Header.RqData.ChanId='MW' THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+		END IF;
+	END;
+
+END MODULE;

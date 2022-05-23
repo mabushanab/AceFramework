@@ -1,0 +1,101 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+
+--DECLARE AUDIT_MODULE_NAME EXTERNAL CHAR 'module_name';
+--DECLARE FLOW_START EXTERNAL BOOLEAN FALSE; 
+CREATE COMPUTE MODULE AuditPoint_PrepareOutgoingAuditRequest 
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE q CHAR '''';
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+		--DECLARE EnvRef REFERENCE TO Environment.Variables;
+		DECLARE CharSet INT  GetDefaultCharacterSet();
+		--DECLARE InPropRef REFERENCE TO InputRoot.Properties;
+		
+		SET OutputRoot.MQMD.CodedCharSetId = CharSet;
+		
+		CREATE LASTCHILD OF OutputRoot.XMLNSC.Audit NAME 'auditHeader';
+		
+		DECLARE auditRef REFERENCE TO OutputRoot.XMLNSC.Audit.auditHeader;
+		DECLARE inHeaderRef REFERENCE TO Environment.ESB.Framework.ErrorHandler.Header;
+		
+		-- SET auditRef.audit= COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.AuditEnabled,TRUE);
+		SET auditRef.log= COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.LogEnabled,TRUE);
+		SET auditRef.audit=FALSE;
+		
+		IF(EXISTS(InputRoot.MQRFH2.usr.retry.count[])) THEN 
+			SET auditRef.retryCount = CAST (InputRoot.MQRFH2.usr.retry.count AS INT);
+		ELSE
+			SET auditRef.retryCount = 0;
+		END IF;
+		
+		--SET auditRef.requestId = REQ_ID || CAST( CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyyMMddhhmmss');
+		SET auditRef.requestId = COALESCE(inHeaderRef.TransactionId,CAST( CURRENT_TIMESTAMP AS CHARACTER FORMAT 'ddMMyyyyhhmmssSSSSSS'));--EnvRef.Header.RqID;
+	    --SET auditRef.activityName = AUDIT_POINT_LEVEL; --EnvRef.activityName;
+		--SET auditRef.moduleName = AUDIT_MODULE_NAME;
+		--SET auditRef.level = 'Audit';
+		SET auditRef.timestamp = CAST (CURRENT_TIMESTAMP AS CHARACTER FORMAT GetTimestampFormat() );
+	
+		SET auditRef.flowStart = FLOW_START;
+		
+		--New Add by Sherif 17 June 2016
+		
+		IF CAST(auditRef.flowStart AS BOOLEAN) THEN
+			SET auditRef.channelId = COALESCE(inHeaderRef.ChannelId,'');
+			SET auditRef.userName VALUE = COALESCE(inHeaderRef.ChannelUserInfo.UserName,'');
+			SET auditRef.channelReqTime VALUE  = COALESCE(inHeaderRef.RequestTime,'');
+			SET auditRef.serviceCode = COALESCE(inHeaderRef.ServiceCode,'');
+			SET auditRef.sessionId = COALESCE(inHeaderRef.SessionId,'');
+			
+			ELSE 
+			
+			SET auditRef.channelId = COALESCE(inHeaderRef.ChannelId,'');
+			SET auditRef.userName VALUE = COALESCE(inHeaderRef.ChannelUserInfo.UserName,'');
+			SET auditRef.serviceCode = COALESCE(inHeaderRef.ServiceCode,'');
+			SET auditRef.sessionId = COALESCE(inHeaderRef.SessionId,''); 
+			SET auditRef.status = COALESCE(inHeaderRef.ResponseStatus.Code,'');
+			
+		END IF;
+		
+		SET auditRef.applicationName = ApplicationLabel;
+		SET auditRef.messageFlowName = MessageFlowLabel;
+		SET auditRef.brokerName = BrokerName;
+		SET auditRef.executionGroupName = ExecutionGroupLabel;
+		
+		IF CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.LogEnabled AS BOOLEAN)THEN
+			
+			SET auditRef.outgoingmessage =  CAST(ASBITSTREAM(InputBody,COALESCE(InputRoot.Properties.Encoding,InputRoot.MQMD.Encoding),CharSet )AS CHAR CCSID InputRoot.Properties.CodedCharSetId ENCODING InputRoot.Properties.Encoding);
+
+			DECLARE I INTEGER 1;  
+	        DECLARE J INT ;     
+			SET J = CARDINALITY(InputLocalEnvironment.Destination.HTTP.*[]); 
+			WHILE I <=  J DO
+				SET Environment.Variables.query.*[I] = InputLocalEnvironment.Destination.HTTP.*[I] ; 
+				SET I = I + 1;
+			END WHILE;					 
+			 
+			CREATE FIELD Environment.Variables.CREATEXML;
+	
+	        CREATE FIRSTCHILD OF Environment.Variables.CREATEXML DOMAIN 'XMLNSC';
+	        SET Environment.Variables.CREATEXML.XMLNSC.details = Environment.Variables.query;  
+	        DECLARE  HyperpayResultDetails CHAR; 
+	        SET HyperpayResultDetails=   CAST(ASBITSTREAM(Environment.Variables.CREATEXML.XMLNSC CCSID 1208) AS CHARACTER CCSID 1208);  
+	        	
+			 	
+			  	 
+			 SET auditRef.outgoingmessage = auditRef.outgoingmessage || HyperpayResultDetails  ; 
+				     
+			  	 
+				   
+
+			SET auditRef.logType = 'Information';
+	
+			 --SET auditRef.message = CAST(ASBITSTREAM(auditRef.message) AS CHARACTER CCSID COALESCE(InputRoot.Properties.CodedCharSetId,GetDefaultCharacterSet()) ENCODING COALESCE(InputRoot.Properties.CodedCharSetId,546));		
+		END IF;
+		
+		
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+

@@ -1,0 +1,88 @@
+
+
+
+
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+
+
+DECLARE LOG_ENABLED EXTERNAL BOOLEAN FALSE;
+DECLARE SCHEMA_VALIDATION_ENABLED EXTERNAL BOOLEAN FALSE;
+CREATE FILTER MODULE MQ_Input_Node_IsAuditEnabled
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+
+
+		IF NOT EXISTS(Environment.Properties.{ApplicationLabel}.{flowName}[]) THEN
+
+			IF LOG_ENABLED THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+
+		ELSE
+
+			IF CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.LogEnabled AS BOOLEAN) OR CAST( Environment.Properties.{ApplicationLabel}.{flowName}.Logging.AuditEnabled AS BOOLEAN) THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+
+		END IF;
+	END;
+
+END MODULE;
+DECLARE SERVICE_OUT EXTERNAL BOOLEAN FALSE;
+CREATE FILTER MODULE MQ_OutputNode_IsServiceOut
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE ChannelId CHAR COALESCE(Root.XMLNSC.*:*[<].Header.ChannelId,'');
+		DECLARE queueName1 CHAR '';
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+		declare loadedPriorityRef reference to Environment.Properties.{ApplicationLabel}.{flowName};
+		IF SERVICE_OUT THEN
+			 --SET LocalEnvironment.Destination.MQ.DestinationData[1].queueName = GetWSAdapterRsFlowQueue();
+			SET LocalEnvironment.Destination.MQ.DestinationData[1].queueName = getChannelOutQueue(ChannelId);
+
+			RETURN TRUE;
+
+		ELSEIF queueName1 <> '' THEN 
+			 	 SET LocalEnvironment.Destination.MQ.DestinationData[1].queueName = getChannelOutQueue(ChannelId);
+			 	 --declare queueName reference to LocalEnvironment.Destination.MQ.DestinationData[1].queueName; 
+				 --SET LocalEnvironment.Destination.MQ.DestinationData[1].queueName = queueName1;    
+			RETURN TRUE; 
+		ELSE
+			RETURN FALSE;
+		END IF;
+
+
+	END;
+
+END MODULE;
+
+CREATE FILTER MODULE MQ_Input_Node_IsSchemaValidationEnabled
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+		IF NOT EXISTS(Environment.Properties.{ApplicationLabel}.{flowName}[]) THEN
+
+			IF SCHEMA_VALIDATION_ENABLED THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+
+		ELSE
+
+			IF CAST(Environment.Properties.{ApplicationLabel}.{flowName}.SchemaValidation.ValidationEnabled AS BOOLEAN) THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+
+		END IF;
+	END;
+
+END MODULE;

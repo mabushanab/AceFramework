@@ -1,0 +1,27 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+
+
+CREATE FILTER MODULE File_Input_Node_IsSchemaValidationNeeded
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+		IF NOT EXISTS(Environment.Properties.{ApplicationLabel}.{flowName}[]) THEN
+		
+			IF SCHEMA_VALIDATION_ENABLED THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+			
+		ELSE
+			
+			IF CAST(Environment.Properties.{ApplicationLabel}.{flowName}.SchemaValidation.ValidationEnabled AS BOOLEAN)  THEN
+				RETURN TRUE;
+			ELSE
+				RETURN FALSE;
+			END IF;
+			
+		END IF;
+	END;
+
+END MODULE;

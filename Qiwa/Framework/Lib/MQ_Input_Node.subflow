@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmFilter.msgnode="ComIbmFilter.msgnode" xmlns:ComIbmFlowOrder.msgnode="ComIbmFlowOrder.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmValidate.msgnode="ComIbmValidate.msgnode" xmlns:Qiwa_Framework_Lib_ErrorHandler.subflow="Qiwa/Framework/Lib/ErrorHandler.subflow" xmlns:Qiwa_Framework_Lib_LogAudit.subflow="Qiwa/Framework/Lib/LogAudit.subflow" xmlns:Qiwa_Framework_Lib_MQ_Output_Node.subflow="Qiwa/Framework/Lib/MQ_Output_Node.subflow"
+    xmlns:Qiwa_Framework_Lib_MQ_ReplyToQ_Node.subflow="Qiwa/Framework/Lib/MQ_ReplyToQ_Node.subflow" xmlns:Qiwa_Framework_Lib_PropertyReader.subflow="Qiwa/Framework/Lib/PropertyReader.subflow" xmlns:Qiwa_Framework_Lib_RetryPoint.subflow="Qiwa/Framework/Lib/RetryPoint.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="Qiwa/Framework/Lib/MQ_Input_Node.subflow" nsPrefix="Qiwa_Framework_Lib_MQ_Input_Node.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG_ENABLED" name="LOG_ENABLED" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.PROPERTIES_ENABLED" name="PROPERTIES_ENABLED" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.RETRY_ENABLED" name="RETRY_ENABLED" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCHEMA_VALIDATION_ENABLED" name="SCHEMA_VALIDATION_ENABLED" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.queueName" name="queueName" lowerBound="1" defaultValueLiteral="IN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.messageDomainProperty" name="messageDomainProperty">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.messageFormatProperty" name="messageFormatProperty">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.messageTypeProperty" name="messageTypeProperty">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.messageSetProperty" name="messageSetProperty">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.transactionMode" name="transactionMode" lowerBound="1" eType="//%" defaultValueLiteral="automatic"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IsAtomic" name="IsAtomic" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.dataSource" name="dataSource" defaultValueLiteral="MWMCR_DS">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ROLL_BACK_TRANSACTION" name="ROLL_BACK_TRANSACTION" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ATOMIC_RESPONSE_QUEUE" name="ATOMIC_RESPONSE_QUEUE" defaultValueLiteral="ESBOUT">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LogicalTreePath" name="LogicalTreePath" lowerBound="1" defaultValueLiteral="Environment.Properties">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.PropertiesGroup" name="PropertiesGroup" lowerBound="1" defaultValueLiteral="*">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.PropertyFilename" name="PropertyFilename" lowerBound="1" defaultValueLiteral="*">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="MQ_Input_Node" bundleName="Qiwa/Framework/Lib/MQ_Input_Node" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/MQ_Input_Node.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/MQ_Input_Node.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="MQ Input Node - Receving MQ Request Messages"/>
+    <longDescription xmi:type="utility:ConstantString" string="this sublfow is doing the following : &#xD;&#xA;receiving request message from the request queues, preparing properties , auditing request , error handling , schema and validation"/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="42,183" connection="CLIENT" transactionMode="automatic" policyUrl="{MQPolicyProject}:MQEndpointPolicy">
+        <translation xmi:type="utility:ConstantString" string="MQ Input"/>
+        <shortDescription xmi:type="utility:ConstantString" string="1. Getting Request Message"/>
+        <longDescription xmi:type="utility:ConstantString" string="Get Request Message, from the Request queue regarding to the particular service in XML Format , &#xD;&#xA;and Subflow properties defines transaction type , message and message format.&#xD;&#xA;In case Exception Occured , throw exception from the catch terminal.&#xD;&#xA;In case failure Occured , throw the failure from failure terminal."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="867,249">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="Qiwa/Framework/Lib/MQ_Input_Node" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="SubFlow Output"/>
+        <longDescription xmi:type="utility:ConstantString" string="sublfow is finishing and go to the next step of the service"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="456,249">
+        <translation xmi:type="utility:ConstantString" string="Flow Order"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Audit Then validate"/>
+        <longDescription xmi:type="utility:ConstantString" string="flowing order by auditing the request first , then validate the schema."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_ErrorHandler.subflow:FCMComposite_1" xmi:id="FCMComposite_1_4" location="290,91" dataSource="MWMCR_DS">
+        <translation xmi:type="utility:ConstantString" string="ErrorHandler"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handling Error"/>
+        <longDescription xmi:type="utility:ConstantString" string="in this subflow : &#xD;&#xA;if failure in validate node : then propagate ErrorHandler to ValidationFailure.&#xD;&#xA;if failure in MQ Input node : then propagate ErrorHandler to MQInputFailure.&#xD;&#xA;if Exception forwarded from floworder1 node : then propogate ErrorHandler to MQCatchInput.&#xD;&#xA;subflow takes config file if the service is atomic and datasource for preparing error responses and response flows."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_LogAudit.subflow:FCMComposite_1" xmi:id="FCMComposite_1_10" location="688,200" FLOW_START="true">
+        <translation xmi:type="utility:ConstantString" string="LogAudit"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Logging and Audit"/>
+        <longDescription xmi:type="utility:ConstantString" string="Prepares the Audit Request Message and send it to the Logging Service to be logged."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_11" location="541,188" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_IsAuditEnabled.Main">
+        <translation xmi:type="utility:ConstantString" string="IsAuditEnabled"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Is Audit Request is Enabled?"/>
+        <longDescription xmi:type="utility:ConstantString" string="Checks if the auditing and logging of the service is enabled in the config file isAuditEnabled = true&#xD;&#xA;if true then LogAudit otherwise complete the subflow."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_PropertyReader.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="322,310">
+        <translation xmi:type="utility:ConstantString" string="PropertyReader"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Property Reader from the Config file"/>
+        <longDescription xmi:type="utility:ConstantString" string="reading the configuration properties file from the xml file defined in &quot;PropertiesGroup&quot; and &quot;PropertiesFile&quot; path and to store it on Logical path which is by default &quot;Environment.Properties&quot;"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="195,245" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_IsPropertiesEnabled.Main">
+        <translation xmi:type="utility:ConstantString" string="IsPropertiesEnabled"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check if Properties Enabled"/>
+        <longDescription xmi:type="utility:ConstantString" string="from the user defined property of the flow PROPERTIES_ENABLED = true then route to true for reading config for the service otherwise complete the flow."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_RetryPoint.subflow:FCMComposite_1" xmi:id="FCMComposite_1_6" location="431,184">
+        <translation xmi:type="utility:ConstantString" string="RetryPoint"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Execute Retry Point"/>
+        <longDescription xmi:type="utility:ConstantString" string="Prepare the Service Configuration Elements &quot;minWaitDurationSec&quot; and  &quot;maxRetryCount&quot; then execute the Retry Sublfow."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="203,172">
+        <translation xmi:type="utility:ConstantString" string="Flow Order1"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Retry then Handle Error"/>
+        <longDescription xmi:type="utility:ConstantString" string="flowing order by Retrying the request first , then Handling Errors."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="321,172" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_IsRetryEnabled.Main">
+        <translation xmi:type="utility:ConstantString" string="IsRetryEnabled"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Is Retry Enabled ?"/>
+        <longDescription xmi:type="utility:ConstantString" string="from the user defined property of the flow RETRY_ENABLED = true then route to true for reading config for the service otherwise complete the flow."/>
+      </nodes>
+      <nodes xmi:type="ComIbmValidate.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_9" location="678,316" domain="XMLNSC" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="Validate"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Validation the request"/>
+        <longDescription xmi:type="utility:ConstantString" string="validating the request regarding the shared library of the particular services."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_MQ_Output_Node.subflow:FCMComposite_1" xmi:id="FCMComposite_1_12" location="468,91" queueName="ESBOUT">
+        <translation xmi:type="utility:ConstantString" string="MQ_Output_Node"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_13" location="511,304" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_IsSchemaValidationEnabled.Main">
+        <translation xmi:type="utility:ConstantString" string="IsSchemaValidationEnabled"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Is Schema Validation Enabled ?"/>
+        <longDescription xmi:type="utility:ConstantString" string="Checks if the validation schema  of the  request service is enabled in the config file ValidationEnabled = true&#xD;&#xA;if true then validate request otherwise complete the subflow."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_14" location="736,248" computeExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_SetMsgUIDinEnv.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="SetMsgUIDinEnv"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Set Msg ID in Environment"/>
+        <longDescription xmi:type="utility:ConstantString" string="setting unique transaction id of the message to the environment scope for error handling."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_MQ_ReplyToQ_Node.subflow:FCMComposite_1" xmi:id="FCMComposite_1_15" location="374,36">
+        <translation xmi:type="utility:ConstantString" string="MQ_ReplyToQ_Node"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Reply To Response Queue"/>
+        <longDescription xmi:type="utility:ConstantString" string="Service sends the error response to the response queue"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_11" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_11" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_19" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input3"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.Input4"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input5"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_16" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_13" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_17" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_20" targetNode="FCMComposite_1_13" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_13" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.match" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_14" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_14" targetNode="FCMComposite_1_15" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_22" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG_ENABLED">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG_ENABLED" bundleName="Qiwa/Framework/Lib/MQ_Input_Node" pluginId="Framework"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.PROPERTIES_ENABLED">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.PROPERTIES_ENABLED" bundleName="Qiwa/Framework/Lib/MQ_Input_Node" pluginId="Framework"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.RETRY_ENABLED">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.RETRY_ENABLED" bundleName="Qiwa/Framework/Lib/MQ_Input_Node" pluginId="Framework"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCHEMA_VALIDATION_ENABLED">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.SCHEMA_VALIDATION_ENABLED" bundleName="Qiwa/Framework/Lib/MQ_Input_Node" pluginId="Framework"/>
+              <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.queueName">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.queueName" bundleName="ComIbmMQInput" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQMessageDomainEditor" describedAttribute="Property.messageDomainProperty">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.messageDomainProperty" bundleName="ComIbmMQInput" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                  <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.MRMessageFormatPropertyEditor" describedAttribute="Property.messageFormatProperty">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.messageFormatProperty" bundleName="ComIbmMQInput" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                    <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQMessageTypeEditor" describedAttribute="Property.messageTypeProperty">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.messageTypeProperty" bundleName="ComIbmMQInput" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                      <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.MRMessageSetNamePropertyEditorV8" describedAttribute="Property.messageSetProperty">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.messageSetProperty" bundleName="ComIbmMQInput" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                        <propertyDescriptor groupName="Group.Basic" describedAttribute="Property.transactionMode">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.transactionMode" bundleName="ComIbmMQInput" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                          <propertyDescriptor groupName="Group.Error" configurable="true" userDefined="true" describedAttribute="Property.IsAtomic">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.IsAtomic" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                            <propertyDescriptor groupName="Group.Error" configurable="true" describedAttribute="Property.dataSource">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.dataSource" bundleName="ComIbmCompute" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                              <propertyDescriptor groupName="Group.Error" configurable="true" userDefined="true" describedAttribute="Property.ROLL_BACK_TRANSACTION">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.ROLL_BACK_TRANSACTION" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                <propertyDescriptor groupName="Group.Error" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.ATOMIC_RESPONSE_QUEUE">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.ATOMIC_RESPONSE_QUEUE" bundleName="Qiwa/Framework/Lib/ErrorHandler" pluginId="Framework"/>
+                                  <propertyDescriptor groupName="Group.Properties" configurable="true" userDefined="true" describedAttribute="Property.LogicalTreePath">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.LogicalTreePath" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+                                    <propertyDescriptor groupName="Group.Properties" configurable="true" userDefined="true" describedAttribute="Property.PropertiesGroup">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.PropertiesGroup" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+                                      <propertyDescriptor groupName="Group.Properties" configurable="true" userDefined="true" describedAttribute="Property.PropertyFilename">
+                                        <propertyName xmi:type="utility:TranslatableString" key="Property.PropertyFilename" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+                                      </propertyDescriptor>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.queueName" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="ComIbmMQInput.msgnode#Property.queueName"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.messageDomainProperty" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="ComIbmMQInput.msgnode#Property.messageDomainProperty"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.messageFormatProperty" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="ComIbmMQInput.msgnode#Property.messageFormatProperty"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.messageTypeProperty" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="ComIbmMQInput.msgnode#Property.messageTypeProperty"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.messageSetProperty" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="ComIbmMQInput.msgnode#Property.messageSetProperty"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.transactionMode" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="ComIbmMQInput.msgnode#Property.transactionMode"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.IsAtomic" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="Qiwa/Framework/Lib/ErrorHandler.subflow#Property.IsAtomic"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.dataSource" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="Qiwa/Framework/Lib/ErrorHandler.subflow#Property.dataSource"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ROLL_BACK_TRANSACTION" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="Qiwa/Framework/Lib/ErrorHandler.subflow#Property.ROLL_BACK_TRANSACTION"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ATOMIC_RESPONSE_QUEUE" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="Qiwa/Framework/Lib/ErrorHandler.subflow#Property.ATOMIC_RESPONSE_QUEUE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.LogicalTreePath" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="Qiwa/Framework/Lib/PropertyReader.subflow#Property.LogicalTreePath"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.PropertiesGroup" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="Qiwa/Framework/Lib/PropertyReader.subflow#Property.PropertiesGroup"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.PropertyFilename" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="Qiwa/Framework/Lib/PropertyReader.subflow#Property.PropertyFilename"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+  <eClassifiers xmi:type="ecore:EEnum">
+    <eLiterals xmi:id="transactionMode.automatic" name="automatic"/>
+    <eLiterals xmi:id="transactionMode.yes" name="yes" value="1"/>
+    <eLiterals xmi:id="transactionMode.no" name="no" value="2"/>
+  </eClassifiers>
+</ecore:EPackage>

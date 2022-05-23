@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:Qiwa_Framework_Lib_MQ_Output_Node.subflow="Qiwa/Framework/Lib/MQ_Output_Node.subflow" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="Qiwa/Framework/Lib/MWBusinessErrorResponse.subflow" nsPrefix="Qiwa_Framework_Lib_MWBusinessErrorResponse.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.FLOW_START" name="FLOW_START" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG_ENABLED" name="LOG_ENABLED" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.OUT_QUEUE" name="OUT_QUEUE" defaultValueLiteral="ESBOUT">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="MWBusinessErrorResponse" bundleName="Qiwa/Framework/Lib/MWBusinessErrorResponse" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/MWBusinessErrorResponse.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/MWBusinessErrorResponse.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="Middleware Business Error Response"/>
+    <longDescription xmi:type="utility:ConstantString" string="the service fetches the esb error code and create esb response header with its status, error descriptions&#xD;&#xA;and with request header and putting it to the service response queue"/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="244,125" dataSource="MWMCR_DS" computeExpression="esql://routine/Qiwa.Framework.Lib#ESBBusinessErrorResponse_handleRs.Main">
+        <translation xmi:type="utility:ConstantString" string="handleRs"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Handle response"/>
+        <longDescription xmi:type="utility:ConstantString" string="recieving esb error code and create esb response header with error descriptions and status&#xD;&#xA;"/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_MQ_Output_Node.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="417,126" queueName="ESBOUT">
+        <translation xmi:type="utility:ConstantString" string="ESBResponse"/>
+        <shortDescription xmi:type="utility:ConstantString" string="ESB Error Response queue"/>
+        <longDescription xmi:type="utility:ConstantString" string="putting the business esb error message for the response queue"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="63,125">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="Qiwa/Framework/Lib/MWBusinessErrorResponse" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Start handling Error Response"/>
+        <longDescription xmi:type="utility:ConstantString" string="Start Handling Business Error Response"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.FLOW_START">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.FLOW_START" bundleName="Qiwa/Framework/Lib/LogAudit" pluginId="Framework"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG_ENABLED">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.LOG_ENABLED" bundleName="Qiwa/Framework/Lib/MQ_Output_Node" pluginId="Framework"/>
+          <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.OUT_QUEUE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.OUT_QUEUE" bundleName="Qiwa/Framework/Lib/MWBusinessErrorResponse" pluginId="Framework"/>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.FLOW_START" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="Qiwa/Framework/Lib/MQ_Output_Node.subflow#Property.FLOW_START"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.LOG_ENABLED" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="Qiwa/Framework/Lib/MQ_Output_Node.subflow#Property.LOG_ENABLED"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.OUT_QUEUE" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="Qiwa/Framework/Lib/MQ_Output_Node.subflow#Property.queueName"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

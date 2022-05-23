@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmFilter.msgnode="ComIbmFilter.msgnode" xmlns:ComIbmFlowOrder.msgnode="ComIbmFlowOrder.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:Qiwa_Framework_Lib_LogAudit.subflow="Qiwa/Framework/Lib/LogAudit.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility"
+    nsURI="Qiwa/Framework/Lib/MQ_Output_Node.subflow" nsPrefix="Qiwa_Framework_Lib_MQ_Output_Node.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG_ENABLED" name="LOG_ENABLED" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.queueName" name="queueName">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.FLOW_START" name="FLOW_START" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SERVICE_OUT" name="SERVICE_OUT" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="MQ_Output_Node" bundleName="Qiwa/Framework/Lib/MQ_Output_Node" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/MQ_Output_Node.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/MQ_Output_Node.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="MQ Output Node"/>
+    <longDescription xmi:type="utility:ConstantString" string="doing the following:&#xD;&#xA;mapping request Correlation id with response correlation id for syncronization the reply.&#xD;&#xA;checking if the SERVICE_OUT is true or false for choosing the response queue.&#xD;&#xA;auditing the response in the database."/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="44,109">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="Qiwa/Framework/Lib/MQ_Output_Node" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Starting Service Output Node"/>
+        <longDescription xmi:type="utility:ConstantString" string="Starting Service Output Node"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="573,121" connection="CLIENT" transactionMode="no" policyUrl="{MQPolicyProject}:MQEndpointPolicy">
+        <translation xmi:type="utility:ConstantString" string="MQ Output"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Response Queue"/>
+        <longDescription xmi:type="utility:ConstantString" string="Putting the Response in the Response of the queue which is declared in the MCR Table"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="283,107">
+        <translation xmi:type="utility:ConstantString" string="Flow Order"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Audit then return response"/>
+        <longDescription xmi:type="utility:ConstantString" string="auditting response then putting the response in the response queue"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="399,30" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_IsAuditEnabled.Main">
+        <translation xmi:type="utility:ConstantString" string="IsAuditEnabled"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check is Audit is Enabled"/>
+        <longDescription xmi:type="utility:ConstantString" string="check if the audit is enabled , if true then prepare the resposne to be audited in the Database."/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_LogAudit.subflow:FCMComposite_1" xmi:id="FCMComposite_1_4" location="547,42">
+        <translation xmi:type="utility:ConstantString" string="LogAudit"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Logging and Audit response"/>
+        <longDescription xmi:type="utility:ConstantString" string="Prepares the Response message for sending it to the Logging service to be logged in the DB"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="434,115" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_OutputNode_IsServiceOut.Main">
+        <translation xmi:type="utility:ConstantString" string="IsServiceOut"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check if Service Out"/>
+        <longDescription xmi:type="utility:ConstantString" string="check if service out = true then put the resposne to ESB.WS.OUT&#xD;&#xA;otherwise put the response to Response Queue of the service"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="568,199" connection="CLIENT" destinationMode="list" transactionMode="no" policyUrl="{MQPolicyProject}:MQEndpointPolicy">
+        <translation xmi:type="utility:ConstantString" string="MQ Output1"/>
+        <shortDescription xmi:type="utility:ConstantString" string="WebService gateway service"/>
+        <longDescription xmi:type="utility:ConstantString" string="Putting the Response in the ESB.WS.OUT Queue for testing using WebServiceGateway adapter."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_9" location="136,109" computeExpression="esql://routine/Qiwa.Framework.Lib#MQ_Output_Node_Compute.Main">
+        <translation xmi:type="utility:ConstantString" string="check_CorrelID"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check Correlation ID for Response"/>
+        <longDescription xmi:type="utility:ConstantString" string="Check if Correlation id is null then set correlation id of the request &#xD;&#xA;for syncing request with response."/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_9" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG_ENABLED">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG_ENABLED" bundleName="Qiwa/Framework/Lib/MQ_Output_Node" pluginId="Framework"/>
+        <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.queueName">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.queueName" bundleName="ComIbmMQOutput" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.FLOW_START">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.FLOW_START" bundleName="Qiwa/Framework/Lib/LogAudit" pluginId="Framework"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SERVICE_OUT">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.SERVICE_OUT" bundleName="Qiwa/Framework/Lib/MQ_Output_Node" pluginId="Framework"/>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.queueName" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="ComIbmMQOutput.msgnode#Property.queueName"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.FLOW_START" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="Qiwa/Framework/Lib/LogAudit.subflow#Property.FLOW_START"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

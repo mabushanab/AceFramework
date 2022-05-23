@@ -1,0 +1,73 @@
+
+
+BROKER SCHEMA Qiwa.Framework.Lib
+
+
+
+
+/*
+*
+* File name: MQ_Output_Node.esql
+*
+* Purpose: MQ Output Node with Logging and Auditing.
+*
+* Authors: Yasser Shaderma
+*
+* Date 23 Des 2018
+* Version: 1.0
+*
+* @copyright Inspire Jordan All rights reserved.
+*
+*/
+
+
+
+
+
+Declare ENABLE_AUDIT_OUTPUT EXTERNAL BOOLEAN true;
+
+
+CREATE COMPUTE MODULE MQ_Output_Node_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+		declare loadedPriorityRef reference to Environment.Properties.{ApplicationLabel}.{flowName}.Priority;
+		
+		-- Environment.Properties.eFAWATEERcom_RemoveCustomerBilling.RemoveCustomerBillingRqFlow;
+
+		IF OutputRoot.MQMD.CorrelId = NULL OR OutputRoot.MQMD.CorrelId = CAST('000000000000000000000000000000000000000000000000' AS BLOB) THEN
+			SET OutputRoot.MQMD.CorrelId = OutputRoot.MQMD.MsgId;
+		END IF;
+
+		IF EXISTS (loadedPriorityRef.Priority[]) THEN  
+			SET OutputRoot.MQMD.Priority = CAST(loadedPriorityRef.Priority AS INT);
+		END IF;
+
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+
+CREATE FILTER MODULE Filter_Is_Audit_Enabled_Output_Node
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		RETURN ENABLE_AUDIT_OUTPUT;
+	END;
+
+END MODULE;

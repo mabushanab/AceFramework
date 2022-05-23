@@ -1,0 +1,915 @@
+
+
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+
+
+CREATE COMPUTE MODULE ErrorHandler_CreateGeniricRs
+	--DECLARE soapenv NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/';
+	DECLARE soapenv NAMESPACE 'http://www.w3.org/2003/05/soap-envelope';
+	DECLARE xml NAMESPACE 'http://www.w3.org/XML/1998/namespace';
+	DECLARE ns1 NAMESPACE 'http://qiwa.com/ESB/ExternalInterfaces/v1.0';
+	DECLARE common NAMESPACE 'http://qiwa.com/ESB/common/types';
+
+	DECLARE IsODMWSAdapter EXTERNAL BOOLEAN FALSE;
+	
+	DECLARE IsNICAdapter EXTERNAL BOOLEAN FALSE;
+	
+	DECLARE IsFrotEndAdapter EXTERNAL BOOLEAN FALSE ;
+
+	DECLARE IsFrontEndJSONAdapter EXTERNAL BOOLEAN FALSE;
+
+	DECLARE IsT24Adapter EXTERNAL BOOLEAN FALSE;
+
+	DECLARE IsT24OFENQAdapter EXTERNAL BOOLEAN FALSE;
+
+	DECLARE IsNIWSAdapter EXTERNAL BOOLEAN FALSE;
+
+	DECLARE IsMEPSWSAdapter EXTERNAL BOOLEAN FALSE;
+
+	DECLARE IsICBSWSAdapter EXTERNAL BOOLEAN FALSE;
+
+	DECLARE IsA2AWSAdapter EXTERNAL BOOLEAN FALSE;
+
+	DECLARE IsACHWSAdapter EXTERNAL BOOLEAN FALSE;
+	
+	DECLARE IsUnifonicAdapter EXTERNAL BOOLEAN FALSE;
+	
+	DECLARE IsMLSDWSAdapter EXTERNAL BOOLEAN FALSE;
+	
+	DECLARE IsCapptionsWSAdapter EXTERNAL BOOLEAN FALSE;
+	
+	DECLARE IsHyperpayWSAdapter EXTERNAL BOOLEAN FALSE;
+	
+	
+	-- @TODO : Define backend flags here
+	--
+	--DECLARE IsBillingWS EXTERNAL BOOLEAN FALSE ;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE EnglishMSG, ArabicMSG CHAR '';
+		DECLARE ServiceName CHAR FIELDNAME(InputRoot.XMLNSC.*:*[<]);
+		DECLARE ServiceResponseName CHAR getServiceResponseName(ServiceName);
+		IF Environment.Variables.esb.errorType = 'ValidationFailure' THEN
+			CALL CopyMessageHeaders();
+			DECLARE ErrorInfo ROW;
+
+			CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+			call CreateEsbXMLResponseHeaderFromRoot('ESBSCHEMA', InputRoot, OutputRoot,ServiceResponseName);
+			SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.Status = 'Error';
+			SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg = OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg ||' : '|| ErrorInfo.CompleteErrorMsg;
+			RETURN TRUE;
+		END IF;
+
+
+
+		if IsFrotEndAdapter then
+			--- need to be reviewed
+			CALL CopyMessageHeaders();
+			-- IF Environment.Variables.esb.errorType = 'Failure' THEN
+			CALL GenerateSOAPFault('ESB', 'System Exception','Error Occured while invoking the ESB web service');
+			SET OutputLocalEnvironment.Destination.SOAP.Reply.Transport.HTTP.ReplyStatusCode = 500;
+
+		ELSEIF IsFrontEndJSONAdapter THEN
+			CALL CopyMessageHeaders();
+			CALL GenerateJSONFault('ESB', 'System Exception','Error Occured while invoking the ESB REST service');
+			SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 500;
+
+		
+		ELSEIF IsODMWSAdapter  THEN
+			
+			DECLARE ESBErrorCode CHARACTER;
+			DECLARE ODMErrorCode CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:detail.*:WebServiceException.*:errorCode;
+			
+			SET OutputRoot.Properties = Environment.Variables.esb.ODMWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.ODMWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.ODMWS.MQRFH2;
+			
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.ODMWS.ServiceRequestName);
+			--DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.ODMWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			--CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+			CREATE LASTCHILD OF OutBodyRef NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.ODMWS.Header;
+			
+			IF NOT CAST(Environment.Properties.ODM_WSAdapter.ODM_WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ODM_WSAdapter.ODM_WSAdapterFlow.Variables.ODMSystemDownErrorCode,'ODM99996'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ODM_WSAdapter.ODM_WSAdapterFlow.Variables.ODMFailureErrorCode,'ODM99997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ODM_WSAdapter.ODM_WSAdapterFlow.Variables.ODMFaultErrorCode,'ODM99998'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ODM_WSAdapter.ODM_WSAdapterFlow.Variables.ODMTechnicalErrorCode,'ODM99999'),reqHeaderRef,resHeaderRef);
+			END IF;
+			
+		ELSEIF IsUnifonicAdapter  THEN
+			
+			DECLARE ESBErrorCode CHARACTER;
+			
+			SET OutputRoot.Properties = Environment.Variables.esb.UnifonicWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.UnifonicWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.UnifonicWS.MQRFH2;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN('JSON') PARSE(InputRoot.BLOB.BLOB);
+			
+			SET Environment.Variables.esb.UnifonicWSResponse = OutputRoot.JSON.Data;
+			DECLARE unifonicErrorCode CHAR Environment.Variables.esb.UnifonicWSResponse.errorCode;
+			DECLARE unifonicErrorDesc CHAR Environment.Variables.esb.UnifonicWSResponse.message;
+			
+			DELETE FIELD OutputRoot.JSON;
+			
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.UnifonicWS.ServiceRequestName);
+			--DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.UnifonicWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			--CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+			CREATE LASTCHILD OF OutBodyRef NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.UnifonicWS.Header;
+			
+			IF NOT CAST(Environment.Properties.UnifonicWSAdapter.UnifonicWSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.UnifonicWSAdapter.UnifonicWSAdapterFlow.Variables.UnifonicSystemDownErrorCode,'UNI99996'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.UnifonicWSAdapter.UnifonicWSAdapterFlow.Variables.UnifonicFailureErrorCode,'UNI99997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header_Using_Backend_Code ('UNIWS',unifonicErrorCode,reqHeaderRef,resHeaderRef);
+				--CALL Create_esbXML_Response_Header(COALESCE(COALESCE(unifonicErrorCode,Environment.Properties.UnifonicWSAdapter.UnifonicWSAdapterFlow.Variables.UnifonicFaultErrorCode),'UNI99998'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header_Using_Backend_Code ('UNIWS',unifonicErrorCode,reqHeaderRef,resHeaderRef);
+				--CALL Create_esbXML_Response_Header(COALESCE(COALESCE(unifonicErrorCode,Environment.Properties.UnifonicWSAdapter.UnifonicWSAdapterFlow.Variables.UnifonicTechnicalErrorCode),'UNI99999'),reqHeaderRef,resHeaderRef);
+			END IF;
+			
+			IF OutputRoot.XMLNSC.{ServiceResponseName}.Header.DebugFlag = '1' THEN
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorCode = unifonicErrorCode;
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorDescription = unifonicErrorDesc;
+			END IF;
+			
+		ELSEIF IsNICAdapter  THEN
+			
+			DECLARE ESBErrorCode CHARACTER;
+			DECLARE NICErrorCode CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:detail.*:SamisWSFault.*:ErrorCode;
+			DECLARE NICErrorDesc CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:detail.*:SamisWSFault.*:Message;
+			
+			SET OutputRoot.Properties = Environment.Variables.esb.NICWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.NICWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.NICWS.MQRFH2;
+			
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.NICWS.ServiceRequestName);
+			--DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.ODMWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			--CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+			CREATE LASTCHILD OF OutBodyRef NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.NICWS.Header;
+			
+			IF NOT CAST(Environment.Properties.NIC_WSAdapter.NIC_WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.NIC_WSAdapter.NIC_WSAdapterFlow.Variables.NICSystemDownErrorCode,'NIC99996'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.NIC_WSAdapter.NIC_WSAdapterFlow.Variables.NICFailureErrorCode,'NIC99997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				-- CALL Create_esbXML_Response_Header(COALESCE(NICErrorCode,COALESCE(Environment.Properties.NIC_WSAdapter.NIC_WSAdapterFlow.Variables.NICFaultErrorCode,'NIC99998')),reqHeaderRef,resHeaderRef);
+				CALL Create_esbXML_Response_Header_Using_Backend_Code ('NICWS',COALESCE(NICErrorCode,COALESCE(Environment.Properties.NIC_WSAdapter.NIC_WSAdapterFlow.Variables.NICFaultErrorCode,'NIC99998')),reqHeaderRef,resHeaderRef);
+			
+			ELSE
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.NIC_WSAdapter.NIC_WSAdapterFlow.Variables.NICTechnicalErrorCode,'NIC99999'),reqHeaderRef,resHeaderRef);
+			END IF;
+			
+			IF OutputRoot.XMLNSC.*:*[<].Header.DebugFlag='1' THEN
+				SET OutputRoot.XMLNSC.*:*[<].Header.BackendError.ErrorCode = NICErrorCode;
+				SET OutputRoot.XMLNSC.*:*[<].Header.BackendError.ErrorDescription = NICErrorDesc;
+			END IF;
+			
+		ELSEIF IsMLSDWSAdapter THEN
+			
+			DECLARE ESBErrorCode CHARACTER;
+			
+			SET OutputRoot.Properties = Environment.Variables.esb.MLSDWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.MLSDWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.MLSDWS.MQRFH2;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN('JSON') PARSE(InputRoot.BLOB.BLOB);
+			
+			SET Environment.Variables.esb.MLSDWSResponse = OutputRoot.JSON.Data;
+			DECLARE MLSDErrorCode CHAR Environment.Variables.esb.MLSDWSResponse.FaultMessage.detail.CustomFault.ErrorCode;
+			DECLARE MLSDErrorDesc CHAR Environment.Variables.esb.MLSDWSResponse.FaultMessage.detail.CustomFault.ErrorDescription;
+			
+			SET MLSDErrorCode = COALESCE(MLSDErrorCode,Environment.Variables.esb.MLSDWSResponse.FaultMessage.detail.FaultContract.ErrorCode);
+			SET MLSDErrorDesc = COALESCE(MLSDErrorDesc,Environment.Variables.esb.MLSDWSResponse.FaultMessage.detail.FaultContract.ErrorMessage);
+			
+			DELETE FIELD OutputRoot.JSON;
+			
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.MLSDWS.ServiceRequestName);
+			--DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.UnifonicWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			--CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+			CREATE LASTCHILD OF OutBodyRef NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.MLSDWS.Header;
+			
+			IF NOT CAST(Environment.Properties.MLSD_WSAdapter.MLSD_WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.MLSD_WSAdapter.MLSD_WSAdapterFlow.Variables.MLSDSystemDownErrorCode,'MLSD9996'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.MLSD_WSAdapter.MLSD_WSAdapterFlow.Variables.MLSDFailureErrorCode,'MLSD9997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header_Using_Backend_Code ('MLSDWS',COALESCE(MLSDErrorCode,COALESCE(Environment.Properties.MLSD_WSAdapter.MLSD_WSAdapterFlow.Variables.MLSDFaultErrorCode,'MLSD9998')),reqHeaderRef,resHeaderRef);
+				--CALL Create_esbXML_Response_Header(COALESCE(COALESCE(unifonicErrorCode,Environment.Properties.UnifonicWSAdapter.UnifonicWSAdapterFlow.Variables.UnifonicFaultErrorCode),'UNI99998'),reqHeaderRef,resHeaderRef);
+			ELSE
+				DECLARE httpResponseCode INT InputRoot.HTTPResponseHeader."X-Original-HTTP-Status-Code";
+				IF httpResponseCode = 404 AND LENGTH(COALESCE(MLSDErrorCode,'')) < 1 THEN
+					SET MLSDErrorCode = 'MLSD0008';
+					CALL Create_esbXML_Response_Header_Using_Backend_Code ('MLSDWS',MLSDErrorCode,reqHeaderRef,resHeaderRef);
+				ELSE
+					CALL Create_esbXML_Response_Header_Using_Backend_Code ('MLSDWS',COALESCE(MLSDErrorCode,COALESCE(Environment.Properties.MLSD_WSAdapter.MLSD_WSAdapterFlow.Variables.MLSDTechnicalErrorCode,'MLSD9999')),reqHeaderRef,resHeaderRef);
+				END IF;
+				--CALL Create_esbXML_Response_Header(COALESCE(COALESCE(unifonicErrorCode,Environment.Properties.UnifonicWSAdapter.UnifonicWSAdapterFlow.Variables.UnifonicTechnicalErrorCode),'UNI99999'),reqHeaderRef,resHeaderRef);
+			END IF;
+			
+			IF OutputRoot.XMLNSC.{ServiceResponseName}.Header.DebugFlag = '1' THEN
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorCode = MLSDErrorCode;
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorDescription = MLSDErrorDesc;
+			END IF;
+
+		ELSEIF IsCapptionsWSAdapter THEN
+
+			DECLARE ESBErrorCode CHARACTER;
+			
+			SET OutputRoot.Properties = Environment.Variables.esb.CAPPTIONSWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.CAPPTIONSWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.CAPPTIONSWS.MQRFH2;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN('JSON') PARSE(InputRoot.BLOB.BLOB);
+			
+			SET Environment.Variables.esb.CAPPTIONSWSResponse = OutputRoot.JSON.Data;
+			DECLARE CAPPTIONSWSErrorCode CHAR Environment.Variables.esb.CAPPTIONSWSResponse.httpcode;
+			DECLARE CAPPTIONSWSErrorName CHAR Environment.Variables.esb.CAPPTIONSWSResponse.name;
+			DECLARE CAPPTIONSWSErrorDesc1 CHAR COALESCE(Environment.Variables.esb.CAPPTIONSWSResponse.errors,'');
+			DECLARE CAPPTIONSWSErrorDesc2 CHAR CAPPTIONSWSErrorDesc1 || Environment.Variables.esb.CAPPTIONSWSResponse.errors.Item;
+
+			DELETE FIELD OutputRoot.JSON;
+			
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.CAPPTIONSWS.ServiceRequestName);
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			CREATE LASTCHILD OF OutBodyRef NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.CAPPTIONSWS.Header;
+			
+			IF NOT CAST(Environment.Properties.CAPPTIONS_WSAdapter.CAPPTIONS_WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.CAPPTIONS_WSAdapter.CAPPTIONS_WSAdapterFlow.Variables.CapptionsSystemDownErrorCode,'CAPP9996'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.CAPPTIONS_WSAdapter.CAPPTIONS_WSAdapterFlow.Variables.CapptionsFailureErrorCode,'CAPP9997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				--CALL Create_esbXML_Response_Header_Using_Backend_Code ('CAPPTIONSWS',COALESCE(Environment.Properties.CAPPTIONS_WSAdapter.CAPPTIONS_WSAdapterFlow.Variables.CapptionsFaultErrorCode,'CAPP9998'),reqHeaderRef,resHeaderRef);
+				CALL Create_esbXML_Response_Header (COALESCE(Environment.Properties.CAPPTIONS_WSAdapter.CAPPTIONS_WSAdapterFlow.Variables.CapptionsFaultErrorCode,'CAPP9998'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header (COALESCE(Environment.Properties.CAPPTIONS_WSAdapter.CAPPTIONS_WSAdapterFlow.Variables.CapptionsTechnicalErrorCode,'CAPP9999'),reqHeaderRef,resHeaderRef);
+			END IF;
+			
+			IF OutputRoot.XMLNSC.{ServiceResponseName}.Header.DebugFlag = '1' THEN
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorCode = CAPPTIONSWSErrorCode;
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorDescription = CAPPTIONSWSErrorName || ': ' || CAPPTIONSWSErrorDesc2;
+			END IF;
+			
+		ELSEIF IsHyperpayWSAdapter THEN
+			DECLARE ESBErrorCode CHARACTER;
+			SET OutputRoot.Properties = Environment.Variables.esb.HyperpayWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.HyperpayWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.HyperpayWS.MQRFH2;
+			
+			CREATE LASTCHILD OF OutputRoot DOMAIN('JSON') PARSE(InputRoot.BLOB.BLOB);
+			SET Environment.Variables.esb.HyperpayWSResponse = OutputRoot.JSON.Data;
+			DECLARE hyperpayErrorCode CHAR Environment.Variables.esb.HyperpayWSResponse.result.code;
+			DECLARE hyperpayErrorDesc CHAR Environment.Variables.esb.HyperpayWSResponse.result.description;
+			DELETE FIELD OutputRoot.JSON;
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.HyperpayWS.ServiceRequestName);
+			
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+			
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+			
+			CREATE LASTCHILD OF OutBodyRef NAME ServiceResponseName;
+			
+			CREATE FIRSTCHILD OF OutBodyRef.{ServiceResponseName} NAME 'Header';
+			
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.{ServiceResponseName}.Header;
+			
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.HyperpayWS.Header;
+
+			IF LENGTH(hyperpayErrorCode) < 1 THEN
+				IF NOT CAST(Environment.Properties.Hyperpay_WSAdapter.Hyperpay_WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+					CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.Hyperpay_WSAdapter.Hyperpay_WSAdapterFlow.Variables.HyperpaySystemDownErrorCode,'HYPP0096'),reqHeaderRef,resHeaderRef);
+				ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+					CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.Hyperpay_WSAdapter.Hyperpay_WSAdapterFlow.Variables.HyperpayFailureErrorCode,'HYPP0097'),reqHeaderRef,resHeaderRef);
+				ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+					CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.Hyperpay_WSAdapter.Hyperpay_WSAdapterFlow.Variables.HyperpayFaultErrorCode,'HYPP0098'),reqHeaderRef,resHeaderRef);
+				ELSE
+					CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.Hyperpay_WSAdapter.Hyperpay_WSAdapterFlow.Variables.HyperpayTechnicalErrorCode,'HYPP0099'),reqHeaderRef,resHeaderRef);
+				--CALL Create_esbXML_Response_Header_Using_Backend_Code ('HYPERPAY_WS',hyperpayErrorCode,reqHeaderRef,resHeaderRef);
+				END IF;
+				
+			ELSE
+				CALL Create_esbXML_Response_Header_Using_Backend_Code ('HYPERPAY_WS',hyperpayErrorCode,reqHeaderRef,resHeaderRef);
+			END IF;
+				
+			IF OutputRoot.XMLNSC.{ServiceResponseName}.Header.DebugFlag = '1' THEN
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorCode = hyperpayErrorCode;
+				SET OutputRoot.XMLNSC.{ServiceResponseName}.Header.BackendError.ErrorDescription = hyperpayErrorDesc;
+			END IF;
+
+		ELSEIF IsT24OFENQAdapter THEN
+
+
+			DECLARE ESBErrorCode CHARACTER;
+
+			SET OutputRoot.Properties = Environment.Variables.esb.T24.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.T24.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.T24.MQRFH2;
+			--SET OutputRoot.XMLNSC = Environment.Variables.esb.BillingWS.messageBody;
+
+			IF OutputRoot.MQMD.ReplyToQ IS NULL OR OutputRoot.MQMD.ReplyToQ = '' THEN
+				SET OutputRoot.MQMD.ReplyToQ = Environment.Variables.esb.T24.MQMD.ReplyToQ;
+			END IF;
+
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.T24.ServiceRequestName);
+			DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.T24.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.*:{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.*:{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.T24.Header;
+			IF NOT CAST(Environment.Properties.T24_OFSInquiryAdapter.OFSInquiryAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(Environment.Properties.T24_OFSInquiryAdapter.OFSInquiryAdapterFlow.Variables.T24SystemDownErrorCode,reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header(Environment.Properties.T24_OFSInquiryAdapter.OFSInquiryAdapterFlow.Variables.T24TechnicalErrorCode,reqHeaderRef,resHeaderRef);
+			END IF;
+
+		ELSEIF IsNIWSAdapter THEN
+
+			DECLARE NIWSErrorCode CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:faultstring;
+			DECLARE ESBErrorCode CHARACTER;
+			SET OutputRoot.Properties = Environment.Variables.esb.NIWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.NIWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.NIWS.MQRFH2;
+
+			IF OutputRoot.MQMD.ReplyToQ IS NULL OR OutputRoot.MQMD.ReplyToQ = '' THEN
+				SET OutputRoot.MQMD.ReplyToQ = Environment.Variables.esb.NIWS.MQMD.ReplyToQ;
+			END IF;
+
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.NIWS.ServiceRequestName);
+			DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.NIWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.*:{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.*:{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.NIWS.Header;
+
+
+			IF NOT CAST(Environment.Properties.NI_WSAdapter.WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.NI_WSAdapter.WSAdapterFlow.Variables.NISystemDownErrorCode,'NI999997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.NI_WSAdapter.WSAdapterFlow.Variables.NIFailureErrorCode,'NI999998'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.NI_WSAdapter.WSAdapterFlow.Variables.NIFaultErrorCode,'NI999999'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.NI_WSAdapter.WSAdapterFlow.Variables.NITechnicalErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE),reqHeaderRef,resHeaderRef);
+			END IF;
+
+		ELSEIF IsMEPSWSAdapter THEN
+
+			DECLARE MEPSWSErrorCode CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:faultstring;
+			DECLARE ESBErrorCode CHARACTER;
+			SET OutputRoot.Properties = Environment.Variables.esb.MEPSWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.MEPSWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.MEPSWS.MQRFH2;
+
+			IF OutputRoot.MQMD.ReplyToQ IS NULL OR OutputRoot.MQMD.ReplyToQ = '' THEN
+				SET OutputRoot.MQMD.ReplyToQ = Environment.Variables.esb.MEPSWS.MQMD.ReplyToQ;
+			END IF;
+
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.MEPSWS.ServiceRequestName);
+			DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.MEPSWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.*:{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.*:{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.MEPSWS.Header;
+
+
+			IF NOT CAST(Environment.Properties.MEPS_WSAdapter.WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.MEPS_WSAdapter.WSAdapterFlow.Variables.MEPSSystemDownErrorCode,'MEPS9997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				--DECLARE ErrorInfo ROW;
+				--CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.MEPS_WSAdapter.WSAdapterFlow.Variables.MEPSFailureErrorCode,'MEPS9998'),reqHeaderRef,resHeaderRef);
+				--IF OutputRoot.XMLNSC.*:*[<].Header.DebugFlag='1' THEN
+				--SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg = OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg ||' : '|| ErrorInfo.CompleteErrorMsg;
+				--END IF;
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.MEPS_WSAdapter.WSAdapterFlow.Variables.MEPSFaultErrorCode,'MEPS9999'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.MEPS_WSAdapter.WSAdapterFlow.Variables.MEPSTechnicalErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE),reqHeaderRef,resHeaderRef);
+			END IF;
+			--icbs ws adapter handling
+		ELSEIF IsICBSWSAdapter THEN
+
+			DECLARE ICBSWSErrorCode CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:faultstring;
+			DECLARE ESBErrorCode CHARACTER;
+			SET OutputRoot.Properties = Environment.Variables.esb.ICBSWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.ICBSWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.ICBSWS.MQRFH2;
+
+			IF OutputRoot.MQMD.ReplyToQ IS NULL OR OutputRoot.MQMD.ReplyToQ = '' THEN
+				SET OutputRoot.MQMD.ReplyToQ = Environment.Variables.esb.ICBSWS.MQMD.ReplyToQ;
+			END IF;
+
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.ICBSWS.ServiceRequestName);
+			DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.ICBSWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.*:{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.*:{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.ICBSWS.Header;
+
+
+			IF NOT CAST(Environment.Properties.ICBS_WSAdapter.WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ICBS_WSAdapter.WSAdapterFlow.Variables.ICBSSystemDownErrorCode,'ICBS9997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				--DECLARE ErrorInfo ROW;
+				--CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ICBS_WSAdapter.WSAdapterFlow.Variables.ICBSFailureErrorCode,'ICBS9998'),reqHeaderRef,resHeaderRef);
+				--IF OutputRoot.XMLNSC.*:*[<].Header.DebugFlag='1' THEN
+				--SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg = OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg ||' : '|| ErrorInfo.CompleteErrorMsg;
+				--END IF;
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ICBS_WSAdapter.WSAdapterFlow.Variables.ICBSFaultErrorCode,'ICBS9996'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ICBS_WSAdapter.WSAdapterFlow.Variables.ICBSTechnicalErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE),reqHeaderRef,resHeaderRef);
+			END IF;
+			--icbs ws end handling
+			--A2A WS start handling
+		ELSEIF IsA2AWSAdapter THEN
+
+			DECLARE A2AWSErrorCode CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:faultstring;
+			DECLARE ESBErrorCode CHARACTER;
+			SET OutputRoot.Properties = Environment.Variables.esb.A2AWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.A2AWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.A2AWS.MQRFH2;
+
+			IF OutputRoot.MQMD.ReplyToQ IS NULL OR OutputRoot.MQMD.ReplyToQ = '' THEN
+				SET OutputRoot.MQMD.ReplyToQ = Environment.Variables.esb.A2AWS.MQMD.ReplyToQ;
+			END IF;
+
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.A2AWS.ServiceRequestName);
+			DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.A2AWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.*:{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.*:{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.A2AWS.Header; 
+
+
+			IF NOT CAST(Environment.Properties.A2A_WSAdapter.WSAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.A2A_WSAdapter.WSAdapterFlow.Variables.A2ASystemDownErrorCode,'A2A9997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				--DECLARE ErrorInfo ROW;
+				--CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.A2A_WSAdapter.WSAdapterFlow.Variables.A2AFailureErrorCode,'A2A9998'),reqHeaderRef,resHeaderRef);
+				--IF OutputRoot.XMLNSC.*:*[<].Header.DebugFlag='1' THEN
+				--SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg = OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg ||' : '|| ErrorInfo.CompleteErrorMsg;
+				--END IF;
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.A2A_WSAdapter.WSAdapterFlow.Variables.A2AFaultErrorCode,'A2A9999'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.A2A_WSAdapter.WSAdapterFlow.Variables.A2ATechnicalErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE),reqHeaderRef,resHeaderRef);
+			END IF;
+			--A2A ws end handling
+
+		ELSEIF IsACHWSAdapter THEN
+		--	DECLARE ACHWSErrorCode CHARACTER ; 
+		-- 	SET ACHWSErrorCode = COALESCE(InputRoot.JSON.Body.*:*[<].Response_Code,InputRoot.JSON.Body.*:*[<].Result.ErrorCode);
+			
+			-- DECLARE ACHWSErrorCode CHARACTER InputRoot.SOAP.*:Body.*:Fault.*:faultstring;
+			DECLARE ACHWSErrorCode CHARACTER COALESCE(InputRoot.JSON.Body.*:*[<].Response_Code,InputRoot.JSON.Body.*:*[<].Result.ErrorCode);
+			DECLARE ESBErrorCode CHARACTER;
+			SET OutputRoot.Properties = Environment.Variables.esb.RESTWS.Properties;
+			SET OutputRoot.MQMD = Environment.Variables.esb.RESTWS.MQMD;
+			SET OutputRoot.MQRFH2 = Environment.Variables.esb.RESTWS.MQRFH2;
+
+			IF OutputRoot.MQMD.ReplyToQ IS NULL OR OutputRoot.MQMD.ReplyToQ = '' THEN
+				SET OutputRoot.MQMD.ReplyToQ = Environment.Variables.esb.RESTWS.ReplyToQ;
+			END IF;
+
+			SET ServiceResponseName = getServiceResponseName(Environment.Variables.esb.RESTWS.ServiceRequestName);
+			DECLARE ServiceNameSpace NAMESPACE Environment.Variables.esb.RESTWS.ServiceNameSpace;
+
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+
+			DECLARE OutBodyRef REFERENCE TO OutputRoot.XMLNSC;
+
+			CREATE LASTCHILD OF OutBodyRef NAMESPACE ServiceNameSpace NAME ServiceResponseName;
+
+			CREATE FIRSTCHILD OF OutBodyRef.*:{ServiceResponseName} NAME 'Header';
+
+			DECLARE resHeaderRef REFERENCE TO OutBodyRef.*:{ServiceResponseName}.Header;
+
+			DECLARE reqHeaderRef REFERENCE TO Environment.Variables.esb.RESTWS.Header;
+
+
+			IF NOT CAST(Environment.Properties.ACH_RestAdapter.RestAdapterFlow.Variables.IsSystemAvailable AS BOOLEAN) THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ACH_RestAdapter.RestAdapterFlow.Variables.ACHSystemDownErrorCode,'ACH9997'),reqHeaderRef,resHeaderRef);
+			ELSEIF Environment.Variables.esb.errorType = 'Failure' THEN
+				--DECLARE ErrorInfo ROW;
+				--CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ACH_RestAdapter.RestAdapterFlow.Variables.ACHFailureErrorCode,'ACH9998'),reqHeaderRef,resHeaderRef);
+				--IF OutputRoot.XMLNSC.*:*[<].Header.DebugFlag='1' THEN
+				--SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg = OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg ||' : '|| ErrorInfo.CompleteErrorMsg;
+				--END IF;
+			ELSEIF Environment.Variables.esb.errorType = 'Fault' THEN
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ACH_RestAdapter.RestAdapterFlow.Variables.ACHFaultErrorCode,'ACH9999'),reqHeaderRef,resHeaderRef);
+			ELSE
+				CALL Create_esbXML_Response_Header(COALESCE(Environment.Properties.ACH_RestAdapter.RestAdapterFlow.Variables.ACHTechnicalErrorCode,ESB_RUNTIME_TECHNICAL_ERROR_CODE),reqHeaderRef,resHeaderRef);
+			END IF;
+
+		ELSE
+			--THROW USER EXCEPTION ;
+			CALL CopyMessageHeaders();
+			DECLARE ErrorInfo ROW;
+
+			CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+			call CreateEsbXMLResponseHeaderFromRoot(ESB_MIDDLEWARE_RUNTIME_ERROR_RESPONSE_CODE, InputRoot, OutputRoot,ServiceResponseName);
+			SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.Status = 'Error';
+			IF OutputRoot.XMLNSC.*:*[<].Header.DebugFlag='1' THEN
+				SET OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg = OutputRoot.XMLNSC.*:*[<].Header.ResponseStatus.EnglishMsg ||' : '|| ErrorInfo.CompleteErrorMsg;
+			END IF;
+			--RETURN TRUE;
+		END IF;
+		--*********************
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+
+	CREATE PROCEDURE GenerateJSONFault(IN SourceOfError CHAR,IN TypeOfException CHAR,IN ErrorText CHAR)
+	BEGIN
+		-- Declare NameSpace
+		CREATE LASTCHILD OF OutputRoot DOMAIN('JSON');
+		--SET OutputRoot.SOAP.Context.Namespace.(SOAP.NamespaceDecl)xmlns:soapenv = soapenv;
+
+		CREATE FIELD OutputRoot.JSON.Data.Error;
+
+
+		DECLARE RF_JSONError REFERENCE TO OutputRoot.JSON.Data.Error;
+
+		SET RF_JSONError.Code = 'REST:Gateway';
+		SET RF_JSONError.Reason = ErrorText;
+		SET RF_JSONError.Node = SourceOfError||':'||TypeOfException;
+
+		SET OutputExceptionList = InputExceptionList;
+		DECLARE refToOutException REFERENCE TO OutputExceptionList.*[1];
+		DETACH refToOutException;
+		ATTACH refToOutException TO RF_JSONError.ErrorTraceTemp AS FIRSTCHILD;
+
+		DECLARE ErrorInfo ROW;
+		CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+		IF (COALESCE(ErrorInfo.CompleteErrorMsg,'') ='' )THEN
+			SET RF_JSONError.Detail = CAST(ASBITSTREAM(RF_JSONError.ErrorTraceTemp) AS CHARACTER CCSID GetDefaultCharacterSet());
+
+		ELSE
+			SET RF_JSONError.Detail = ErrorInfo.CompleteErrorMsg; --CAST(ASBITSTREAM(RF_JSONError.ErrorTraceTemp) AS CHARACTER CCSID GetDefaultCharacterSet());
+
+		END IF;
+		SET RF_JSONError.ErrorTraceTemp = NULL;
+
+	END;
+
+	CREATE PROCEDURE GenerateSOAPFault(IN SourceOfError CHAR,IN TypeOfException CHAR,IN ErrorText CHAR)
+	BEGIN
+		-- Declare NameSpace
+		CREATE LASTCHILD OF OutputRoot DOMAIN('SOAP');
+		SET OutputRoot.SOAP.Context.Namespace.(SOAP.NamespaceDecl)xmlns:soapenv = soapenv;
+		--SET OutputRoot.SOAP.Context.Namespace.(SOAP.NamespaceDecl)xmlns:soap = 'http://schemas.xmlsoap.org/soap/envelope/';
+		--Declare Output Reference Variable
+		/* SET OutputRoot.SOAP.Body.soapenv:Fault.soapenv:Code.soapenv:Value = 'soapenv:Receiver';
+		SET OutputRoot.SOAP.Body.soapenv:Fault.soapenv:Code.soapenv:Subcode.soapenv:Value = 'my:subcode value';
+		SET OutputRoot.SOAP.Body.soapenv:Fault.soapenv:Reason.soapenv:Text = 'my Reason string';
+		SET OutputRoot.SOAP.Body.soapenv:Fault.soapenv:Reason.soapenv:Text.(SOAP.Attribute)xml:lang = 'en';
+		SET OutputRoot.SOAP.Body.soapenv:Fault.soapenv:Node = 'my Node string';
+		SET OutputRoot.SOAP.Body.soapenv:Fault.soapenv:Role = 'my Role string';
+		SET OutputRoot.SOAP.Body.soapenv:Fault.soapenv:Detail.my:Text = 'my detail string';
+		*/
+		--CREATE FIELD OutputRoot.SOAP.Body.common:ServiceFault;
+		CREATE FIELD OutputRoot.SOAP.Body.soapenv:Fault;
+		--CREATE FIELD OutputRoot.SOAP.Body.soapenv:Fault.common:ServiceFault;
+		--DECLARE RF_SOAPFault REFERENCE TO OutputRoot.SOAP.Body.soapenv:Fault;
+		DECLARE RF_SOAPFault REFERENCE TO OutputRoot.SOAP.Body.soapenv:Fault;
+
+		SET RF_SOAPFault.soapenv:Code.soapenv:Value = 'soapenv:Sender';
+		SET RF_SOAPFault.soapenv:Reason.soapenv:Text = ErrorText;
+		SET RF_SOAPFault.soapenv:Reason.soapenv:Text.(SOAP.Attribute)xml:lang = 'en';
+		--SET RF_SOAPFault.faultactor = SourceOfError||':'||TypeOfException;--source of error : provider or error, type of exception system, provider, or business
+		SET RF_SOAPFault.soapenv:Node = SourceOfError||':'||TypeOfException;
+		-- SET RF_SOAPFault.soapenv:Role = 'my Role string';
+		-- Embed the ExceptionList into ErrorTrace
+		SET OutputExceptionList = InputExceptionList;
+		DECLARE refToOutException REFERENCE TO OutputExceptionList.*[1];
+		DETACH refToOutException;
+		ATTACH refToOutException TO RF_SOAPFault.ErrorTraceTemp AS FIRSTCHILD;
+
+		DECLARE ErrorInfo ROW;
+		CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+		-- SET reasonDescription = errorRef.errorName;
+		IF (COALESCE(ErrorInfo.CompleteErrorMsg,'') ='' )THEN
+			SET RF_SOAPFault.soapenv:Detail.soapenv:Text = CAST(ASBITSTREAM(RF_SOAPFault.ErrorTraceTemp) AS CHARACTER CCSID GetDefaultCharacterSet());
+
+		ELSE
+			SET RF_SOAPFault.soapenv:Detail.soapenv:Text = ErrorInfo.CompleteErrorMsg; --CAST(ASBITSTREAM(RF_SOAPFault.ErrorTraceTemp) AS CHARACTER CCSID GetDefaultCharacterSet());
+
+		END IF;
+		--SET RF_SOAPFault.detail = ErrorInfo.CompleteErrorMsg;--CAST(ASBITSTREAM(RF_SOAPFault.ErrorTraceTemp) AS CHARACTER CCSID GetDefaultCharacterSet());
+		SET RF_SOAPFault.ErrorTraceTemp = NULL;
+
+	END;
+END MODULE;
+
+declare IsAtomic external BOOLEAN true ;
+
+
+CREATE FILTER MODULE ErrorHandler_IsAtomicService
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+
+		if IsAtomic then
+
+			RETURN TRUE;
+		else
+			return false;
+		end if;
+
+	END;
+
+END MODULE;
+
+CREATE COMPUTE MODULE ErrorHandler_HandleFailure
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		SET Environment.Variables.esb.errorType = 'Failure';
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE ErrorHandler_HandleFileFailure
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		SET Environment.Variables.esb.errorType = 'FileFailure';
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE ErrorHandler_HandleFault
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		SET Environment.Variables.esb.errorType = 'Fault';
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE ErrorHandler_HandleValidationFailure
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		SET Environment.Variables.esb.errorType = 'ValidationFailure';
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+CREATE COMPUTE MODULE ErrorHandler_HandleMQInputFailure
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		SET Environment.Variables.esb.errorType = 'MQInputFailure';
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+DECLARE EXCEPTION_CAUGHT SHARED BOOLEAN FALSE;
+CREATE COMPUTE MODULE ErrorHandler_HandleMQInputCatch
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyEntireMessage();
+		SET Environment.Variables.esb.errorType = 'MQInputCatch';
+		SET EXCEPTION_CAUGHT = TRUE;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+
+
+CREATE COMPUTE MODULE ErrorHandler_HandleFileInputCatch
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyEntireMessage();
+		SET Environment.Variables.esb.errorType = 'FileInputCatch';
+		SET EXCEPTION_CAUGHT = TRUE;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

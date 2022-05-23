@@ -1,0 +1,79 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+
+
+
+
+
+--DECLARE ERROR_MODULE_NAME EXTERNAL CHAR 'module_name';
+
+
+CREATE COMPUTE MODULE ErrorPoint_PrepareErrorMsg
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		--Environment.Variables.Header.RqID
+		--DECLARE EnvRef REFERENCE TO Environment.Variables;
+		--DECLARE InPropRef REFERENCE TO InputRoot.Properties;
+		
+		DECLARE ErrorInfo ROW;
+		DECLARE CompleteErrorMsg CHAR;
+		DECLARE CharSet INTEGER GetDefaultCharacterSet(); 
+		SET OutputRoot.MQMD.CodedCharSetId = CharSet;
+		CREATE LASTCHILD OF OutputRoot.XMLNSC.Error NAME 'auditHeader';
+		
+		DECLARE errorRef REFERENCE TO OutputRoot.XMLNSC.Error;
+		DECLARE auditRef REFERENCE TO errorRef.auditHeader;
+		
+		DECLARE inHeaderRef REFERENCE TO InputRoot.XMLNSC.*:*[<].Header;
+		
+		DECLARE inAuditRef REFERENCE TO InputRoot.XMLNSC.Audit.auditHeader;
+		
+		
+		SET auditRef.requestId = COALESCE(COALESCE(inHeaderRef.TransactionId,inAuditRef.requestId),COALESCE(Environment.ESB.Framework.ErrorHandler.Header.TransactionId,CAST( CURRENT_TIMESTAMP AS CHARACTER FORMAT 'ddMMyyyyhhmmssSSSSSS')));--EnvRef.Header.RqID;
+		--SET auditRef.activityName = NULL; --EnvRef.activityName;
+		--SET auditRef.moduleName = ERROR_MODULE_NAME ;
+		--SET auditRef.level = 'Error';
+		SET auditRef.timestamp = CAST (CURRENT_TIMESTAMP AS CHARACTER FORMAT GetTimestampFormat() );
+		--SET OutputRoot.XMLNSC.Audit.auditHeader.timestamp = CAST (CURRENT_TIMESTAMP AS CHARACTER FORMAT com.ibm.pk.olp.utility.GetTimestampFormat() );
+		
+		SET auditRef.applicationName = ApplicationLabel;
+		SET auditRef.messageFlowName = MessageFlowLabel;
+		SET auditRef.brokerName = BrokerName;
+		SET auditRef.executionGroupName = ExecutionGroupLabel;
+		SET auditRef.logType = 'Error';
+		
+			SET auditRef.channelId = COALESCE(inHeaderRef.ChannelId,Environment.ESB.Framework.ErrorHandler.Header.ChannelId);
+			SET auditRef.userName VALUE = COALESCE(inHeaderRef.ChannelUserInfo.UserName,Environment.ESB.Framework.ErrorHandler.Header.ChannelUserInfo.UserName);
+			SET auditRef.serviceCode = COALESCE(inHeaderRef.ServiceCode,Environment.ESB.Framework.ErrorHandler.Header.ServiceCode);
+			SET auditRef.sessionId = COALESCE(inHeaderRef.SessionId,Environment.ESB.Framework.ErrorHandler.Header.SessionId);
+			SET auditRef.channelReqTime VALUE  = COALESCE(inHeaderRef.RequestTime,COALESCE(Environment.ESB.Framework.ErrorHandler.Header.RequestTime,CAST (CURRENT_TIMESTAMP AS CHARACTER FORMAT GetTimestampFormat() )));
+
+		
+		DECLARE reasonCode CHAR;
+		DECLARE reasonDescription CHAR;
+
+		IF(NOT EXISTS(InputExceptionList.*[])) THEN
+			SET CompleteErrorMsg  = CAST(ASBITSTREAM(InputRoot.SOAP CCSID CharSet) as CHARACTER CCSID CharSet);
+			SET reasonCode = InputRoot.SOAP.*:Body.*:Fault.*:faultcode;
+			SET reasonDescription =InputRoot.SOAP.*:Body.*:Fault.*:faultstring;
+	    ELSE
+		  CALL PARSEExceptionList(InputExceptionList, ErrorInfo);
+		 -- SET reasonDescription = errorRef.errorName;
+		  IF (COALESCE(ErrorInfo.CompleteErrorMsg,'') ='' )THEN
+			RETURN FALSE;
+		  ELSE
+			--SET CompleteErrorMsg=CAST(CURRENT_TIMESTAMP AS CHAR)||';  Errror Text  :'|| ErrorInfo.CompleteErrorMsg;
+			SET CompleteErrorMsg = ErrorInfo.CompleteErrorMsg;
+		  END IF;
+	   END IF;
+
+	SET errorRef.errorMessage = CAST(CompleteErrorMsg AS CHARACTER ENCODING GetDefaultCharacterSet());
+
+	SET errorRef.errorName =  'Error in Application: ' || ApplicationLabel || ' in Message Flow: '|| MessageFlowLabel;--'Error in ' || ERROR_MODULE_NAME || ' module'; --EnvRef.errorName;
+
+	SET auditRef.requestMessage = InputBody;--CAST(ASBITSTREAM(InputRoot.*[<] CCSID CharSet ) AS CHAR CCSID CharSet); --'Error in ' || ERROR_MODULE_NAME || ' module'; --CAST(ASBITSTREAM(InputExceptionList CCSID CharSet ) AS CHAR CCSID CharSet);
+
+	RETURN TRUE;
+END;
+
+END MODULE;

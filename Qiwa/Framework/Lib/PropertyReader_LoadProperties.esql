@@ -1,0 +1,126 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+
+DECLARE PropertyFilename EXTERNAL CHARACTER '*';
+DECLARE PropertiesGroup EXTERNAL CHARACTER '*';
+DECLARE LogicalTreePath EXTERNAL CHARACTER 'Environment';
+
+DECLARE PROPERTY_SEPERATOR CONSTANT CHARACTER '$(;)';
+DECLARE KEY_VALUE_SEPERATOR CONSTANT CHARACTER ':==:';
+DECLARE MULTI_VALUE_SEPERATOR CONSTANT CHARACTER ', [$@;@$], ';
+DECLARE SUCCESS_STRING CONSTANT CHARACTER 'Succeeded';
+
+CREATE COMPUTE MODULE PropertyReader_LoadProperties
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		DECLARE propertiesString CHARACTER;
+		DECLARE propertiesRow ROW;
+		
+		DECLARE P INTEGER 0; 
+		DECLARE Key CHARACTER;
+    	DECLARE Value CHARACTER;
+    	
+    	DECLARE LogicalTree CHARACTER LogicalTreePath;
+    	
+    	-- Validate logical tree path
+    	IF NOT(STARTSWITH(LogicalTreePath, 'Environment.') OR STARTSWITH(LogicalTreePath, 'OutputLocalEnvironment.')) THEN
+			THROW USER EXCEPTION CATALOG 'BIPv610' MESSAGE 2951 VALUES('Logical tree path must start with either ''Environment'' or ''OutputLocalEnvironment''' ) ;		
+		END IF;
+    	IF ENDSWITH(LogicalTreePath, '.') THEN
+    		SET LogicalTree = SUBSTRING(LogicalTreePath FROM 0 FOR LENGTH(LogicalTreePath));
+    	END IF;
+    	
+		DECLARE brokerName CHAR BrokerName;
+		DECLARE executionGroupName CHAR ExecutionGroupLabel;
+		DECLARE flowName CHAR MessageFlowLabel;
+		
+		-- Substitute place holder values - configuration file
+		DECLARE configFile CHARACTER PropertyFilename;
+		SET configFile = REPLACE(configFile, '${broker.name}', BrokerName);
+		SET configFile = REPLACE(configFile, '${execution.group}', ExecutionGroupLabel);
+		SET configFile = REPLACE(configFile, '${flow.name}', MessageFlowLabel);
+		
+		-- Read properties from configuration file into character
+		SET propertiesString = readerProperties(configFile, PropertiesGroup);
+		
+		-- Check if read was successful, in case of error throw user generated exception
+		IF NOT STARTSWITH(propertiesString,(SUCCESS_STRING || PROPERTY_SEPERATOR)) THEN
+			DECLARE ExceptionMessage CHARACTER;
+			CALL SplitP(propertiesString, propertiesRow, PROPERTY_SEPERATOR);
+			SET ExceptionMessage = FIELDVALUE(propertiesRow.Split.Array[2]);			
+			THROW USER EXCEPTION CATALOG 'BIPv610' MESSAGE 2951 VALUES(ExceptionMessage) ;
+		END IF;
+		
+		-- Remove read 'status' from properties String
+		SET propertiesString = SUBSTRING(propertiesString FROM (LENGTH(SUCCESS_STRING)+ LENGTH(PROPERTY_SEPERATOR)+1));
+				
+		-- Split the properties string with delimiter (semi colon)		
+		CALL SplitP(propertiesString, propertiesRow, PROPERTY_SEPERATOR);
+		
+		-- Loop on each property and construct environment tree
+		FOR property As propertiesRow.Split.Array[] DO
+			SET P = POSITION(KEY_VALUE_SEPERATOR IN property); 
+			SET Key = LEFT(property, P - 1);
+			SET Value = RIGHT(property, LENGTH(property) - (P + LENGTH(KEY_VALUE_SEPERATOR)-1 ) );
+			
+			-- Check multi-value 
+			IF CONTAINS(Value, MULTI_VALUE_SEPERATOR)THEN
+				DECLARE valueRow ROW;
+				CALL SplitP(Value, valueRow, MULTI_VALUE_SEPERATOR);
+				FOR v AS valueRow.Split.Array[] DO
+					EVAL('CREATE LASTCHILD OF ' || LogicalTree || '.' || Key || ' NAME ''Value'' VALUE ''' || v || ''';');
+				END FOR;
+			ELSE
+				EVAL('SET ' || LogicalTree || '.' || Key || ' = ''' || Value || ''';');
+			END IF; 
+		END FOR;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+
+END MODULE;
+
+/* 
+ ======================================================================================== 
+ PROCEDURE Split 
+ ======================================================================================== 
+ Splits S on Delim into an array in Reference OutRef (OutRef.Split.Array[]) 
+ Removes Environment.Split before refilling it 
+ */ 
+ CREATE PROCEDURE SplitP (IN S CHARACTER, IN OutRef REFERENCE, IN Delim CHARACTER) 
+ BEGIN 
+    DECLARE P INTEGER; 
+    DECLARE Idx INTEGER 1; 
+
+    SET OutRef.Split = NULL; 
+     
+    REPEAT 
+       SET P = POSITION(Delim IN S); 
+       IF P = 0 THEN 
+          SET OutRef.Split.Array[Idx] = S; 
+       ELSE 
+          SET OutRef.Split.Array[Idx] = LEFT(S, P - 1); 
+          SET S = SUBSTRING(S FROM P + LENGTH(Delim)); 
+          SET Idx = Idx + 1; 
+       END IF; 
+    UNTIL P = 0 
+        
+    END REPEAT;    
+
+ END; 
+ 
+ /* 
+ ======================================================================================== 
+ PROCEDURE readerProperties 
+ ======================================================================================== 
+ Call external JAVA function to read properties for specific group from 
+ configuration file into delimited single string
+ */
+CREATE FUNCTION readerProperties(IN confiFfile CHARACTER, IN groupName CHARACTER)
+RETURNS CHARACTER
+LANGUAGE JAVA 
+EXTERNAL NAME "Qiwa.Framework.Lib.services.utils.properties.PropertyManager.getDelimitedPropertiesByGroup";

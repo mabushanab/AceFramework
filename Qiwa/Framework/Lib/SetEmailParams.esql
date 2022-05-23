@@ -1,0 +1,80 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+
+
+
+
+
+
+CREATE COMPUTE MODULE SetEmailParams
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('XMLNSC');
+		
+		SET OutputRoot.XMLNSC.SendEmail.Header.TransactionId = Environment.ESB.Notification.Email.Header.TransactionId;
+
+		DECLARE rOutputHeader REFERENCE TO OutputRoot.XMLNSC.SendEmail.Header;
+
+		SET rOutputHeader.ServiceCode = '31200001';
+		SET rOutputHeader.ChannelId ='ESB';
+		SET rOutputHeader.mode = 1;
+		
+
+			SET rOutputHeader.ChannelUserInfo = Environment.ESB.Notification.Email.Header.ChannelUserInfo;
+	
+		
+		--CREATE LASTCHILD OF OutputRoot.XMLNSC.SendEmail.Body NAME 'sendEmailRq';
+
+		DECLARE sendEmailRqRef REFERENCE TO OutputRoot.XMLNSC.SendEmail.Body;
+
+		DECLARE emailNotificationCount INT CARDINALITY(Environment.ESB.Notification.Email.MESSAGE[]);
+		
+		DECLARE emailNotificationIndex INT 1;
+		
+		WHILE  emailNotificationIndex <= emailNotificationCount DO
+		
+			SET sendEmailRqRef.subject= Environment.ESB.Notification.Email.MESSAGE[emailNotificationIndex].subject;
+
+			SET sendEmailRqRef.body = Environment.ESB.Notification.Email.MESSAGE[emailNotificationIndex].body;
+			
+			SET sendEmailRqRef.fromEmail = Environment.ESB.Notification.Email.MESSAGE[emailNotificationIndex].fromEmail;
+			
+			SET sendEmailRqRef.toList = Environment.ESB.Notification.Email.MESSAGE[emailNotificationIndex].toList;
+			
+			SET sendEmailRqRef.ccList = Environment.ESB.Notification.Email.MESSAGE[emailNotificationIndex].ccList;
+			
+			IF EXISTS(Environment.ESB.Notification.Email.MESSAGE[emailNotificationIndex].attachment[]) THEN
+				
+				SET sendEmailRqRef.attachment = Environment.ESB.Notification.Email.MESSAGE[emailNotificationIndex].attachment;
+			ELSE
+				SET sendEmailRqRef.attachment = NULL;
+			END IF;
+
+			
+			PROPAGATE TO TERMINAL 'out' DELETE NONE;
+		
+			SET emailNotificationIndex = emailNotificationIndex + 1;
+		
+		END WHILE;
+		
+		
+		RETURN FALSE;
+
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+

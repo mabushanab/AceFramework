@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="Qiwa/Framework/Lib/PropertyReader.subflow" nsPrefix="Qiwa_Framework_Lib_PropertyReader.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.PropertyFilename" name="PropertyFilename" lowerBound="1" defaultValueLiteral="*">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.PropertiesGroup" name="PropertiesGroup" lowerBound="1" defaultValueLiteral="*">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LogicalTreePath" name="LogicalTreePath" lowerBound="1" defaultValueLiteral="Environment.Properties">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="PropertyReader" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/PropertyReader.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/PropertyReader.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="Loading properties"/>
+    <longDescription xmi:type="utility:ConstantString" string="this service doing the following :&#xD;&#xA;it takes the properties file Locaiton for &quot;propertiesFileName&quot;, and defines the group from propertiesGroup, and this group must be  located in the property file with the format below  APP_NAME.MESSAGE_FLOW_NAME&#xD;&#xA;&#xD;&#xA;and after reading the properties for this service it must be located in XPATH , which is defined in subflow property PropertyLogicalPath which is by default is &quot;Environment.Properties&quot;."/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="51,51">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Starting Loading Properties"/>
+        <longDescription xmi:type="utility:ConstantString" string="Starting Loading Properties"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="252,52">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Complete the  flow"/>
+        <longDescription xmi:type="utility:ConstantString" string="Complete the flow with loaded properties."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="135,51" computeExpression="esql://routine/Qiwa.Framework.Lib#PropertyReader_LoadProperties.Main" computeMode="destination">
+        <translation xmi:type="utility:ConstantString" string="Load Properties"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_6" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.PropertyFilename">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.PropertyFilename" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.PropertiesGroup">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.PropertiesGroup" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LogicalTreePath">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.LogicalTreePath" bundleName="Qiwa/Framework/Lib/PropertyReader" pluginId="Framework"/>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

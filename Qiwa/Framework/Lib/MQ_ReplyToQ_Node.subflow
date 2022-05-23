@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmFilter.msgnode="ComIbmFilter.msgnode" xmlns:ComIbmFlowOrder.msgnode="ComIbmFlowOrder.msgnode" xmlns:ComIbmMQReply.msgnode="ComIbmMQReply.msgnode" xmlns:Qiwa_Framework_Lib_LogAudit.subflow="Qiwa/Framework/Lib/LogAudit.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="Qiwa/Framework/Lib/MQ_ReplyToQ_Node.subflow" nsPrefix="Qiwa_Framework_Lib_MQ_ReplyToQ_Node.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG_ENABLED" name="LOG_ENABLED" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="MQ_ReplyToQ_Node" bundleName="Qiwa/Framework/Lib/MQ_ReplyToQ_Node" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/MQ_ReplyToQ_Node.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/MQ_ReplyToQ_Node.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="MQ reply to queue node"/>
+    <longDescription xmi:type="utility:ConstantString" string="this flow used by mqInput sublfow and backend adapters, for adapters it reply to adapter response queue and for&#xD;&#xA;mq input subflow it sends the errorr reply to the response queue.&#xD;&#xA;&#xD;&#xA;this flow also prepare the audit response to be logged into the database."/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQReply.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="282,164" connection="CLIENT" policyUrl="{MQPolicyProject}:MQEndpointPolicy">
+        <translation xmi:type="utility:ConstantString" string="MQ Reply"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQ Reply"/>
+        <longDescription xmi:type="utility:ConstantString" string="In MQInput Node Subflow it puts response the response queue.&#xD;&#xA;In backends adapters its puts the response to adapter response queues."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="63,156">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="Qiwa/Framework/Lib/MQ_ReplyToQ_Node" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Start Reply to Queue Node"/>
+        <longDescription xmi:type="utility:ConstantString" string="Start Reply to Queue Node"/>
+      </nodes>
+      <nodes xmi:type="Qiwa_Framework_Lib_LogAudit.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="388,91">
+        <translation xmi:type="utility:ConstantString" string="LogAudit"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Logging and Audit Response"/>
+        <longDescription xmi:type="utility:ConstantString" string="Prepares the Response message for sending it to the Logging service to be logged in the DB"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="258,79" filterExpression="esql://routine/Qiwa.Framework.Lib#MQ_Input_Node_IsAuditEnabled.Main">
+        <translation xmi:type="utility:ConstantString" string="IsAuditEnabled"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Check is Audit Enabled ?"/>
+        <longDescription xmi:type="utility:ConstantString" string="check if the audit is enabled , if true then prepare the resposne to be audited in the Database."/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="158,156">
+        <translation xmi:type="utility:ConstantString" string="Flow Order"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Audit then reply"/>
+        <longDescription xmi:type="utility:ConstantString" string="Audit the response then reply to the response queue."/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_4" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG_ENABLED">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG_ENABLED" bundleName="Qiwa/Framework/Lib/MQ_ReplyToQ_Node" pluginId="Framework"/>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

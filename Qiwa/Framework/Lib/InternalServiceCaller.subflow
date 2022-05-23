@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQGet.msgnode="ComIbmMQGet.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmTrace.msgnode="ComIbmTrace.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="Qiwa/Framework/Lib/InternalServiceCaller.subflow" nsPrefix="Qiwa_Framework_Lib_InternalServiceCaller.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.waitInterval" name="waitInterval" lowerBound="1" defaultValueLiteral="50000">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="InternalServiceCaller" bundleName="Qiwa/Framework/Lib/InternalServiceCaller" pluginId="Framework"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj16/InternalServiceCaller.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Framework/icons/full/obj30/InternalServiceCaller.gif"/>
+    <shortDescription xmi:type="utility:ConstantString" string="Internal Service Caller"/>
+    <longDescription xmi:type="utility:ConstantString" string="Calling Services Internally through MQ by preparing Header with unique message and correlation ID,&#xD;&#xA;sending request to request queues, getting response from response queue.&#xD;&#xA;handling timout and also failure.&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;custom properties :&#xD;&#xA;timout : with 50000ms to define the timout call for the service."/>
+    <version xmi:type="utility:ConstantString" string="1.0"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="84,182">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="Qiwa/Framework/Lib/InternalServiceCaller" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Begin Service Caller"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="661,165">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="Qiwa/Framework/Lib/InternalServiceCaller" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="End of service"/>
+        <longDescription xmi:type="utility:ConstantString" string="sending the response of the service and complete the flow"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="299,183" connection="CLIENT" destinationMode="list" transactionMode="no" persistenceMode="asQdef" validateMaster="none" policyUrl="{MQPolicyProject}:MQEndpointPolicy">
+        <translation xmi:type="utility:ConstantString" string="MQOut"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQ Out the request"/>
+        <longDescription xmi:type="utility:ConstantString" string="Putting the Request to Request Queues which is obtained from prepare Header step."/>
+      </nodes>
+      <nodes xmi:type="ComIbmTrace.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="528,116">
+        <translation xmi:type="utility:ConstantString" string="MQGet Failure"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQ Get Failure "/>
+        <longDescription xmi:type="utility:ConstantString" string="Tracing the failure of the service"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQGet.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="427,187" queueName="ESBOUT" connection="CLIENT" messageDomainProperty="XMLNSC" transactionMode="no" waitInterval="5000" inputMQMDLocation="InputRoot.MQMD" getWithCorrelID="true" policyUrl="{MQPolicyProject}:MQEndpointPolicy">
+        <translation xmi:type="utility:ConstantString" string="MQGet"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQ Getting Response"/>
+        <longDescription xmi:type="utility:ConstantString" string="Getting response of the service from response queue defined in prepare header step"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTrace.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="543,199">
+        <translation xmi:type="utility:ConstantString" string="MQGet Warnning"/>
+        <shortDescription xmi:type="utility:ConstantString" string="MQGet Warning Trace"/>
+        <longDescription xmi:type="utility:ConstantString" string="Trace warning of the service."/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output1" location="661,275">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Timeout" bundleName="Qiwa/Framework/Lib/InternalServiceCaller" pluginId="Framework"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Timeout"/>
+        <longDescription xmi:type="utility:ConstantString" string="returning message to the service without timout error."/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="150,182" dataSource="MWMCR_DS" computeExpression="esql://routine/Qiwa.Framework.Lib#InternalServiceCaller_Compute.Main" computeMode="all">
+        <translation xmi:type="utility:ConstantString" string="PrepareHeader"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Preparing Internal Service Request"/>
+        <longDescription xmi:type="utility:ConstantString" string="Prepare Header is doing the following :&#xD;&#xA;defining Message headers, properties and message payload.&#xD;&#xA;fetching request and response queue of the service.&#xD;&#xA;define new msg id and correlation id espacially for the required service."/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.warning" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="OutTerminal.Output1" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.noMessage" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_8" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" describedAttribute="Property.waitInterval">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.waitInterval" bundleName="ComIbmMQGet" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.waitInterval" overriddenNodes="FCMComposite_1_6">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.waitInterval"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

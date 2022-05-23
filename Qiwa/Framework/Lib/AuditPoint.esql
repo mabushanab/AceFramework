@@ -1,0 +1,172 @@
+BROKER SCHEMA Qiwa.Framework.Lib
+PATH Qiwa.Framework.Lib;
+
+--DECLARE AUDIT_MODULE_NAME EXTERNAL CHAR 'module_name';
+DECLARE FLOW_START EXTERNAL BOOLEAN FALSE;
+
+CREATE COMPUTE MODULE AuditPoint_PrepareAuditRequest
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE q CHAR '''';
+		DECLARE flowName CHAR getFlowNameWithouSchema(Environment.FlowNameSplit);
+		--DECLARE EnvRef REFERENCE TO Environment.Variables;
+		DECLARE CharSet INT  GetDefaultCharacterSet();
+		--DECLARE InPropRef REFERENCE TO InputRoot.Properties;
+		
+		SET OutputRoot.MQMD.CodedCharSetId = CharSet;
+		
+		CREATE LASTCHILD OF OutputRoot.XMLNSC.Audit NAME 'auditHeader';
+		
+		DECLARE auditRef REFERENCE TO OutputRoot.XMLNSC.Audit.auditHeader;
+		DECLARE inHeaderRef REFERENCE TO InputRoot.XMLNSC.*:*[<].Header;
+		
+		SET auditRef.audit= COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.AuditEnabled,TRUE);
+		SET auditRef.log= COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.LogEnabled,TRUE);
+		
+		IF(EXISTS(InputRoot.MQRFH2.usr.retry.count[])) THEN 
+			SET auditRef.retryCount = CAST (InputRoot.MQRFH2.usr.retry.count AS INT);
+		ELSE
+			SET auditRef.retryCount = 0;
+		END IF;
+		
+		--SET auditRef.requestId = REQ_ID || CAST( CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyyMMddhhmmss');
+		SET auditRef.requestId = COALESCE(inHeaderRef.TransactionId,CAST( CURRENT_TIMESTAMP AS CHARACTER FORMAT 'ddMMyyyyhhmmssSSSSSS'));--EnvRef.Header.RqID;
+	    --SET auditRef.activityName = AUDIT_POINT_LEVEL; --EnvRef.activityName;
+		--SET auditRef.moduleName = AUDIT_MODULE_NAME;
+		--SET auditRef.level = 'Audit';
+		SET auditRef.timestamp = CAST (CURRENT_TIMESTAMP AS CHARACTER FORMAT GetTimestampFormat() );
+	
+		SET auditRef.flowStart = FLOW_START;
+		
+		--New Add by Sherif 17 June 2016
+		
+		IF CAST(auditRef.flowStart AS BOOLEAN) THEN
+			SET auditRef.channelId = COALESCE(inHeaderRef.ChannelId,'');
+			SET auditRef.userName VALUE = COALESCE(inHeaderRef.ChannelUserInfo.UserName,'');
+			SET auditRef.channelReqTime VALUE  = COALESCE(inHeaderRef.RequestTime,'');
+			SET auditRef.serviceCode = COALESCE(inHeaderRef.ServiceCode,'');
+			SET auditRef.sessionId = COALESCE(inHeaderRef.SessionId,'');
+
+			
+			ELSE 
+			
+			SET auditRef.channelId = COALESCE(inHeaderRef.ChannelId,'');
+			SET auditRef.userName VALUE = COALESCE(inHeaderRef.ChannelUserInfo.UserName,'');
+			SET auditRef.serviceCode = COALESCE(inHeaderRef.ServiceCode,'');
+			SET auditRef.sessionId = COALESCE(inHeaderRef.SessionId,''); 
+			SET auditRef.status = COALESCE(inHeaderRef.ResponseStatus.Code,'');
+			
+		END IF;
+		
+		SET auditRef.applicationName = ApplicationLabel;
+		SET auditRef.messageFlowName = MessageFlowLabel;
+		SET auditRef.brokerName = BrokerName;
+		SET auditRef.executionGroupName = ExecutionGroupLabel;
+		
+		IF CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.LogEnabled AS BOOLEAN) OR LOG_ENABLED THEN
+			SET auditRef.message = InputBody;--CAST(ASBITSTREAM(InputBody) AS CHARACTER CCSID CharSet);
+
+			SET auditRef.logType = 'Information';
+			
+			IF CAST( Environment.Properties.{ApplicationLabel}.{flowName}.Logging.MaskingEnabled AS BOOLEAN) THEN
+				
+				DECLARE maskingType CHAR 'maskingOut';
+				IF FLOW_START THEN 
+					SET maskingType = 'maskingIn';
+				END IF;
+				
+				IF EXISTS(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.{maskingType}[]) THEN
+					DECLARE maskingCount INT CARDINALITY(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.{maskingType}.Value[]);
+				
+					IF maskingCount = 0 THEN 
+						EVAL('SET auditRef.message.'|| CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.{maskingType} AS CHAR)||' = '||q||'*****'||q);
+					
+					ELSE
+					
+					DECLARE index INT 1;
+				
+						WHILE index <= maskingCount  DO
+					
+							EVAL('SET auditRef.message.'|| CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.{maskingType}.Value[index] AS CHAR)||' = '||q||'*****'||q);
+					
+							SET index = index +1;	
+						END WHILE;
+					END IF;
+				END IF;
+				
+			END IF;
+			 --SET auditRef.message = CAST(ASBITSTREAM(auditRef.message) AS CHARACTER CCSID COALESCE(InputRoot.Properties.CodedCharSetId,GetDefaultCharacterSet()) ENCODING COALESCE(InputRoot.Properties.CodedCharSetId,546));		
+		END IF;
+		
+		IF CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.AuditEnabled AS BOOLEAN)THEN 
+			
+			SET auditRef.key1 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key1,'');
+			DECLARE TEST11 CHAR 'SET auditRef.value1 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value1 AS CHAR)||';';
+			
+			--EVAL('SET auditRef.value1 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value1 AS CHAR)||';');
+			--SET auditRef.value1 = COALESCE(InputRoot.*[<].{Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value1},'');
+		
+			SET auditRef.key2 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key2,'');
+			--SET auditRef.value2 = COALESCE(InputRoot.*[>].{Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value2},'');
+		  --EVAL('SET auditRef.value1 = COALESCE(InputRoot.XMLNSC.'||'CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value2 AS CHAR),'');');
+			DECLARE TEST12 CHAR 'SET auditRef.value2 = InputRoot.XMLNSC.'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value2 AS CHAR)||';';
+			--EVAL('SET auditRef.value2 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value2 AS CHAR)||';');
+			
+			SET auditRef.key3 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key3,'');
+			--SET auditRef.value3 = COALESCE(InputRoot.XMLNSC.{Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value3},'');
+			--EVAL('SET auditRef.value3 = COALESCE(InputRoot.*[<].'||'CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value3 AS CHAR),'');');
+			--EVAL('SET auditRef.value3 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value3 AS CHAR)||';');
+			
+			SET auditRef.key4 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key4,'');
+			SET auditRef.key5 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key5,'');
+			SET auditRef.key6 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key6,'');
+			SET auditRef.key7 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key7,'');
+			SET auditRef.key8 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key8,'');
+			SET auditRef.key9 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key9,'');
+			SET auditRef.key10 = COALESCE(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.key10,'');
+			--SET auditRef.value4 = COALESCE(InputRoot.*[<].{Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4},'');
+			--EVAL('SET auditRef.value4 = COALESCE(InputRoot.*[<].'||'CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR),'');');
+			--EVAL('SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||';');
+			IF COALESCE(auditRef.key1,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value1 AS CHAR)||'[]) THEN SET auditRef.value1 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value1 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key2,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value2 AS CHAR)||'[]) THEN SET auditRef.value2 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value2 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key3,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value3 AS CHAR)||'[]) THEN SET auditRef.value3 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value3 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key4,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'[]) THEN SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key5,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value5 AS CHAR)||'[]) THEN SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key6,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value6 AS CHAR)||'[]) THEN SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key7,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value7 AS CHAR)||'[]) THEN SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key8,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value8 AS CHAR)||'[]) THEN SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key9,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value9 AS CHAR)||'[]) THEN SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'; END IF;');
+			END IF;
+			IF COALESCE(auditRef.key10,'') <> '' THEN 
+			EVAL('IF EXISTS(InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value10 AS CHAR)||'[]) THEN SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||'; END IF;');
+			END IF;
+			--EVAL('SET auditRef.value1 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value1 AS CHAR)||';');
+			--EVAL('SET auditRef.value2 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value2 AS CHAR)||';');
+			--EVAL('SET auditRef.value3 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value3 AS CHAR)||';');
+			--EVAL('SET auditRef.value4 = InputRoot.*[<].'||CAST(Environment.Properties.{ApplicationLabel}.{flowName}.Logging.value4 AS CHAR)||';');
+			
+		END IF;
+		
+		
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+

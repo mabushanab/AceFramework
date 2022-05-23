@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<properties refresh-policy="automatic">
+
+	<group name="BS_CreateTransferBeneficiaryService.CreateTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="CustomerNumber" />
+			<property name="value1" value="*:*.Body.CustomerNumber" />
+			<property name="key2" value="BeneficiaryAccount" />
+			<property name="value2" value="*:*.Body.BeneficiaryAccount" />
+			<property name="key3" value="TransactionType" />
+			<property name="value3" value="*:*.Body.TransactionType" />
+			<property name="key4" value="BeneficiaryNickname" />
+			<property name="value4" value="*:*.Body.BeneficiaryNickname" />
+			<property name="key5" value="BeneficiaryName" />
+			<property name="value5" value="*:*.Body.BeneficiaryName" />
+			<property name="key6" value="BankCode" />
+			<property name="value6" value="*:*.Body.BankCode" />
+			<property name="key7" value="Institution1" />
+			<property name="value7" value="*:*.Body.Institution1" />
+			<property name="key8" value="Institution2" />
+			<property name="value8" value="*:*.Body.Institution2" />
+			<property name="key9" value="BeneficiaryBankAcct" />
+			<property name="value9" value="*:*.Body.BeneficiaryBankAcct" />
+			<property name="key10" value="BeneficiaryPymtCntry" />
+			<property name="value10" value="*:*.Body.BeneficiaryPymtCntry" />
+			
+			<property name="MaskingEnabled" value="TRUE" />
+
+			<property name="maskingIn">
+				<value>*:*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Priority">
+			<property name="Priority" value="4" />
+		</group>
+		<group name="BankIdForRoutingService">
+			<property name="qiwa">
+				<value>T24</value>
+				<value>TCTB0013</value>
+				<value>http://qiwa/Service/Transfer/T24/CreateTransferBeneficiary/v1.0</value>
+			</property>
+			<property name="NBI">
+				<value>ICBS</value>
+				<value>ICTB0013</value>
+				<value>http://NBI/Service/Transfer/ICBS/CreateTransferBeneficiary/v1.0</value>
+			</property>
+
+		</group>
+		<group name="Variables">
+			<property name="OPERATION" value="" />
+			<property name="OPTIONS" value="" />
+			<property name="ENQUIRY" value="" />
+			<property name="T24ReplyToQueueName" value="" />
+			<property name="callCorrIDOffset" value="1" />
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>
+	</group>
+
+
+<group name="DeleteTransferBeneficiaryService.DeleteTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+			<property name="maskingIn">
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Priority">
+			<property name="Priority" value="4" />
+		</group>
+		
+		<group name="BankIdForRoutingService">
+			<property name="qiwa">
+				<value>T24</value>
+				<value>DTB002</value>
+				<value>http://qiwa/Service/Payment/T24/DeleteTransferBeneficiary/v1.0</value>
+			</property>
+			<property name="NBI">
+				<value>ICBS</value>
+				<value>DTB003</value>
+				<value>http://NBI/Service/Payment/ICBS/DeleteTransferBeneficiary/v1.0</value>
+			</property>
+
+		</group>
+		
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>
+		<group name="Variables">
+			<property name="callCorrIDOffset" value="1" />
+		</group>
+	</group>
+
+ <group name="SearchTransferBeneficiariesService.SearchTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+			<property name="maskingIn">
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+		</group>
+		<group name="Priority">
+			<property name="Priority" value="4" />
+		</group>
+		
+		<group name="BankIdForRoutingService">
+			<property name="qiwa">
+				<value>T24</value>
+				<value>STB0011</value>
+				<value>http://qiwa/Service/Payment/T24/SearchTransferBeneficiaries/v1.0</value>
+			</property>
+			<property name="NBI">
+				<value>ICBS</value>
+				<value>STB0012</value>
+				<value>http://NBI/Service/Payment/ICBS/SearchTransferBeneficiary/v1.0</value>
+			</property>
+
+		</group>
+		
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>
+		<group name="Variables">
+   <property name="ReplyToQueueName" value="ESB.SEARCH.TRANSFER.BENEFICIARY.RS" />
+			<property name="callCorrIDOffset" value="1" />
+	<property name="qiwa_BANK_CODE" value="qiwa" />
+			<property name="NBI_BANK_CODE"  value="NBI"  />
+			
+			<property name="t24InternalServiceCode" value="STB0002" />
+			<property name="icbsInternalServiceCode" value="STB0003" />      
+      
+		</group>
+	</group>
+	
+	
+	
+<group name="UpdateTransferBeneficiaryService.UpdateTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+			<property name="maskingIn">
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+		</group>
+		<group name="Priority">
+			<property name="Priority" value="4" />
+		</group>
+		
+		<group name="BankIdForRoutingService">
+			<property name="qiwa">
+				<value>T24</value>
+				<value>UTB002</value>
+				<value>http://qiwa/Service/Payment/T24/UpdateTransferBeneficiary/v1.0</value>
+			</property>
+			<property name="NBI">
+				<value>ICBS</value>
+				<value>UTB003</value>
+				<value>http://NBI/Service/Payment/ICBS/UpdateTransferBeneficiary/v1.0</value>
+			</property>
+
+		</group>
+		
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>
+		<group name="Variables">
+			<property name="callCorrIDOffset" value="1" />
+		</group>
+	</group>
+	
+	
+	 <group name="T24_CreateTransferBeneficiary.T24CreateTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="T24ReplyToQueueName" value="T24.TRANSFER.CREATE.TRANSFER.BENEFICIARYRS" />
+			<property name="MaskingEnabled" value="TRUE" />
+			<property name="maskingIn"> 
+			<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+      
+  		</group>
+  		<group name="Retry">
+  			<property name="RetryEnabled" value="FALSE" />
+  			<property name="minWaitDurationSec" value="60" />
+  			<property name="maxRetryCount" value="5" />
+  		</group>
+  		<group name="Variables">
+			<property name="OPERATION" value="BENEFICIARY" />
+			<property name="VERSION" value="ESB.CREATE" />
+			<property name="FUNCTION" value="I" />
+			<property name="PROCESSORVALIDATE" value="PROCESS" />
+			<property name="GTSCONTROL" value="/" />
+			<property name="NOOFAUTH" value="" />
+			<property name="COMPANY" value="JO0010002" />
+		  <property name="TRANSACTIONID" value=",/" />
+		
+  <property name="T24ReplyToQueueName" value="T24.TRANSFER.CREATE.TRANSFER.BENEFICIARYRS" />
+    </group>
+  		<group name="SchemaValidation">
+            <property name="ValidationEnabled" value="FALSE" />
+        </group>	
+        	<group name="RouteToAdapterByBankId">
+		 <property name="qiwa">
+			<value>T24.OFS.TRX.ADAPTER.RQ</value>
+		  </property>
+		  <property name="NBI">
+			<value>ICBS_Q_Name_Adapter</value> 
+		  </property> 
+						 
+	</group>	
+		</group>
+	
+ 
+ <group name="T24_CreateTransferBeneficiary.T24CreateTransferBeneficiaryRsFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="T24ReplyToQueueName" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+			<property name="maskingIn"> 
+			<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+      
+  		</group>
+  		<group name="Retry">
+  			<property name="RetryEnabled" value="FALSE" />
+  			<property name="minWaitDurationSec" value="60" />
+  			<property name="maxRetryCount" value="5" />
+  		</group>
+  		<group name="Variables">
+  			<property name="serviceName" value="CreateTrasferBeneficiary" />
+		</group>
+  		<group name="SchemaValidation">
+            <property name="ValidationEnabled" value="FALSE" />
+        </group>		
+		</group>
+	
+	
+	
+<group name="T24_DeleteTransferBeneficiaryService.DeleteTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+
+			<property name="maskingIn"> 
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+			<property name="OPERATION" value="BENEFICIARY" />
+			<property name="VERSION" value="ESB.UPDATE" />
+			<property name="FUNCTION" value="R" />
+			<property name="PROCESSORVALIDATE" value="PROCESS" />
+			<property name="GTSCONTROL" value="x" />
+			<property name="NOOFAUTH" value="/0" />
+			<property name="COMPANY" value="" />
+			<property name="TRANSACTIONID" value="/" />
+			<property name="T24ReplyToQueueName" value="ESB.T24.DELETE.TRANSFER.BENEFICIARY.T24RS" />
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>	
+	<group name="RouteToAdapterByBankId">
+		 <property name="qiwa">
+			<value>T24.OFS.TRX.ADAPTER.RQ</value>
+		  </property>
+		  <property name="NBI">
+			<value>ICBS_Q_Name_Adapter</value> 
+		  </property> 
+						 
+	</group>		
+	</group>
+	
+	<group name="T24_DeleteTransferBeneficiaryService.DeleteTransferBeneficiaryRsFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="transactionReferenceNumber" />
+			<property name="value1" value="*.Body.T24OFSRES.Header.TRXRERF" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+
+			<property name="MaskingEnabled" value="FALSE" />
+
+			<property name="maskingIn"> 
+				<value></value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>		
+	</group>
+	
+	
+	<group name="T24_SearchTransferBeneficiaryService.SearchTransferBeneficiariesRqFlow">
+	<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+
+			<property name="maskingIn"> 
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+			<property name="OPERATION" value="ENQUIRY.SELECT" />
+			<property name="ENQUIRY" value="qiwa.BEN" />
+			<property name="T24ReplyToQueueName" value="ESB.T24.SEARCH.TRANSFER.BENEFICIARY.T24RS" />
+		</group>
+		<group name="RouteToAdapterByBankId">
+		 <property name="qiwa">
+			<value>T24.OFS.ENQ.ADAPTER.RQ</value>
+		  </property>
+		  <property name="NBI">
+			<value>ICBS_Q_Name_Adapter</value> 
+		  </property> 
+						 
+	</group>	   
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>		
+	</group>
+
+<group name="T24_SearchTransferBeneficiaryService.SearchTransferBeneficiariesRsFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="transactionReferenceNumber" />
+			<property name="value1" value="*.Body.T24OFSRES.Header.TRXRERF" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+
+			<property name="MaskingEnabled" value="FALSE" />
+
+			<property name="maskingIn"> 
+				<value></value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>		
+	</group>
+	
+	
+	
+	
+	<group name="T24_UpdateTransferBeneficiaryService.UpdateTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+
+			<property name="maskingIn"> 
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+			<property name="OPERATION" value="BENEFICIARY" />
+			<property name="VERSION" value="ESB.UPDATE" />
+			<property name="FUNCTION" value="I" />
+			<property name="PROCESSORVALIDATE" value="PROCESS" />
+			<property name="GTSCONTROL" value="x" />
+			<property name="NOOFAUTH" value="0" />
+			<property name="COMPANY" value="" />
+			<property name="TRANSACTIONID" value="/" />
+			<property name="T24ReplyToQueueName" value="ESB.T24.UPDATE.TRANSFER.BENEFICIARY.T24RS" />
+		</group>
+		<group name="RouteToAdapterByBankId">
+		 <property name="qiwa">
+			<value>T24.OFS.TRX.ADAPTER.RQ</value>
+		  </property>
+		  <property name="NBI">
+			<value>ICBS_Q_Name_Adapter</value> 
+		  </property> 
+						 
+	</group>	
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>		
+	</group>
+	
+	<group name="T24_UpdateTransferBeneficiaryService.UpdateTransferBeneficiaryRsFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="transactionReferenceNumber" />
+			<property name="value1" value="*.Body.T24OFSRES.Header.TRXRERF" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+
+			<property name="MaskingEnabled" value="FALSE" />
+
+			<property name="maskingIn"> 
+				<value></value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>		
+	</group>
+	
+	
+	 <group name="ICBS_CreateTransferBeneficiary.ICBSCreateTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="T24ReplyToQueueName" value="ICBS.TRANSFER.CREATE.TRANSFER.BENEFICIARYRS" />
+			<property name="MaskingEnabled" value="TRUE" />
+			<property name="maskingIn"> 
+			<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+      
+  		</group>
+  		<group name="Retry">
+  			<property name="RetryEnabled" value="FALSE" />
+  			<property name="minWaitDurationSec" value="60" />
+  			<property name="maxRetryCount" value="5" />
+  		</group>
+  		<group name="Variables">
+  			<property name="serviceName" value="CreateTrasferBeneficiary" />
+		</group>
+  		<group name="SchemaValidation">
+            <property name="ValidationEnabled" value="FALSE" />
+        </group>		
+		</group>
+	
+	
+	
+	
+<group name="ICBS_DeleteTransferBeneficiaryService.DeleteTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+
+			<property name="maskingIn"> 
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+			<property name="OPERATION" value="BENEFICIARY" />
+			<property name="VERSION" value="CREATE" />
+			<property name="FUNCTION" value="D" />
+			<property name="PROCESSORVALIDATE" value="PROCESS" />
+			<property name="GTSCONTROL" value="" />
+			<property name="NOOFAUTH" value="0" />
+			<property name="COMPANY" value="" />
+			<property name="TRANSACTIONID" value="/" />
+			<property name="ICBSReplyToQueueName" value="ESB.ICBS.DELETE.TRANSFER.BENEFICIARY.ICBSRS" />
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>		
+	</group>
+	
+	<group name="ICBS_SearchTransferBeneficiaryService.SearchTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="T24ReplyToQueueName" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+			<property name="maskingIn"> 
+			<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+      
+  		</group>
+  		<group name="Retry">
+  			<property name="RetryEnabled" value="FALSE" />
+  			<property name="minWaitDurationSec" value="60" />
+  			<property name="maxRetryCount" value="5" />
+  		</group>
+  		<group name="Variables">
+		</group>
+  		<group name="SchemaValidation">
+            <property name="ValidationEnabled" value="FALSE" />
+        </group>		
+	</group>
+	
+	
+	<group name="ICBS_UpdateTransferBeneficiaryService.UpdateTransferBeneficiaryRqFlow">
+		<group name="Logging">
+			<property name="LogEnabled" value="TRUE" />
+			<property name="AuditEnabled" value="TRUE" />
+			<property name="key1" value="" />
+			<property name="value1" value="" />
+			<property name="key2" value="" />
+			<property name="value2" value="" />
+			<property name="key3" value="" />
+			<property name="value3" value="" />
+			<property name="key4" value="" />
+			<property name="value4" value="" />
+			<property name="key5" value="" />
+			<property name="value5" value="" />
+			<property name="key6" value="" />
+			<property name="value6" value="" />
+			<property name="key7" value="" />
+			<property name="value7" value="" />
+			<property name="key8" value="" />
+			<property name="value8" value="" />
+			<property name="key9" value="" />
+			<property name="value9" value="" />
+			<property name="key10" value="" />
+			<property name="value10" value="" />
+			<property name="MaskingEnabled" value="TRUE" />
+
+			<property name="maskingIn"> 
+				<value>*.Header.ChannelUserInfo.UserPassword</value>
+			</property>
+
+		</group>
+		<group name="Retry">
+			<property name="RetryEnabled" value="FALSE" />
+			<property name="minWaitDurationSec" value="60" />
+			<property name="maxRetryCount" value="5" />
+		</group>
+		<group name="Variables">
+			<property name="OPERATION" value="BENEFICIARY" />
+			<property name="VERSION" value="CREATE" />
+			<property name="FUNCTION" value="I" />
+			<property name="PROCESSORVALIDATE" value="PROCESS" />
+			<property name="GTSCONTROL" value="" />
+			<property name="NOOFAUTH" value="0" />
+			<property name="COMPANY" value="" />
+			<property name="TRANSACTIONID" value="/" />
+			<property name="ICBSReplyToQueueName" value="ESB.ICBS.UPDATE.TRANSFER.BENEFICIARY.ICBSRS" />
+		</group>
+		<group name="SchemaValidation">
+			<property name="ValidationEnabled" value="FALSE" />
+		</group>		
+	</group>
+	
+</properties>
